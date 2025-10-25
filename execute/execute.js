@@ -25,11 +25,18 @@ class Execute {
     return await dbConnection()
   }
 
-  async all() {
-    const pool = await this.#connect()
-    const [results] = await pool.execute('SELECT * FROM posts')
+  async all(query, values = []) {
+    try {
+      const pool = await this.#connect()
 
-    return results
+      if (values.length < 0) {
+        return await pool.execute(query)
+      } else {
+        return await pool.execute(query, values)
+      }
+    } catch (error) {
+      throw error
+    }
   }
 }
 
