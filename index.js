@@ -12,15 +12,23 @@ const model = new miniORM({
   database: 'blog',
 })
 
+model.table('posts')
+
 const PORT = process.env.PORT || 3000
 const app = express()
 
 app.get('/', async (req, res) => {
   try {
-    const results = await model.done()
-    return res.send(results)
+    console.log(model.getState())
+    const results = await model
+      .selectAll()
+      .where({ post_id: 2 })
+      .and()
+      .where({ post_author: 'imsamaritan' })
+      .done()
+    return res.send(results[0][0])
   } catch (error) {
-    throw new Error(error.message)
+    throw error
   }
 })
 
