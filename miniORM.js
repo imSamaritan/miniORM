@@ -1,7 +1,10 @@
-const { PoolOptions } = require('mysql2/promise')
+const { PoolOptions, QueryResult } = require('mysql2/promise')
 const Execute = require('./execute/execute')
 
 class miniORM {
+  /**
+   * @property {Execute} #execute
+   */
   #execute
   /**
    * @param {PoolOptions} options
@@ -14,6 +17,9 @@ class miniORM {
     }
   }
 
+  /**
+   * @returns {Promise<QueryResult>}
+   */
   async done() {
     return await this.#execute.all()
   }

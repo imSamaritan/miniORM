@@ -17,13 +17,13 @@ let pool = null
 const dbConnection = async (options) => {
   if (pool) return pool
 
-  const DB_HOST = options?.host || process.env.DB_HOST || 'localhost'
-  const DB_USER = options?.user || process.env.DB_USER || 'root'
-  const DB_PASSWORD = options?.password || process.env.DB_PASSWORD || ''
-  const DB_NAME = options?.database || process.env.DB_NAME
-  const DB_PORT = Number(options?.port || process.env.DB_PORT || 3306)
+  const DB_HOST = options.host || process.env.DB_HOST || 'localhost'
+  const DB_USER = options.user || process.env.DB_USER || 'root'
+  const DB_PASSWORD = options.password || process.env.DB_PASSWORD || ''
+  const DB_NAME = options.database || process.env.DB_NAME
+  const DB_PORT = Number(options.port || process.env.DB_PORT || 3306)
   const CONNECTION_LIMIT = Number(
-    options?.connectionLimit || process.env.CONNECTION_LIMIT || 10
+    options.connectionLimit || process.env.CONNECTION_LIMIT || 10
   )
 
   /**
