@@ -1,47 +1,77 @@
-const { PoolOptions, QueryResult } = require('mysql2/promise')
+const mysql = require('mysql2/promise')
+const queryDebugger = require('debug')('miniORM:query')
 const builder = require('./builder/builder')
 const Execute = require('./execute/execute')
 
 class miniORM {
-  #execute
+  #options
   #state
-  #table
+  #isOperator
   #executeMethod
+  #execute
+  #table
 
-  constructor(options) {
-    if (options) {
-      this.#execute = new Execute(options)
-    } else {
-      this.#execute = new Execute()
-    }
+  /** 
+   * @param {{query: string[], values: (number|string)[]}} state
+   * @param {boolean} isOperator
+   * @param {string} executeMethod
+   */
+  constructor(options = {}, state = { query: [], values: [] }, isOperator, executeMethod) {
+    this.#options = options
+    this.#state = state
+    this.#isOperator = isOperator
+    this.#executeMethod = executeMethod
+
+    if (options) this.#execute = new Execute(options)
+    else this.#execute = new Execute()
+    
   }
 
-  table(table) {
+  /** 
+   * @param {{query: string[], values: (number|string)[]}} state
+   * @param {boolean} isOperator
+   * @param {string} executeMethod
+   * 
+   * @return {miniORM}
+   */
+  clone(state, isOperator = false, executeMethod = this.#executeMethod) {
+    const instance = new miniORM(this.#options, state, isOperator, executeMethod)
+    instance.setTable(this.#table)
+    instance.#execute = this.#execute
+    return instance
+  }
+
+  /**
+   * @param {string} table 
+   * @return {void}
+   */
+  setTable(table) {
     this.#table = table
   }
 
-  getTable() {
+  /*** @return {string}*/
+  get table() {
     return this.#table
   }
 
-  setState(state) {
-    this.#state = state
-  }
-
-  getState() {
+   /*** @return {{query: string[], values: (number|string)[]}}*/
+  get state() {
     return this.#state
   }
 
-  setExecuteMethod(method) {
-    this.#executeMethod = method
+  get operatorSignal() {
+    return this.#isOperator
   }
 
+  /**@return {Promise<mysql.QueryResult>} */
   async done() {
     const method = this.#executeMethod
-    const query = this.#state.query
+    const query = this.#state.query.join(' ') + ';'
     const values = this.#state.values
 
-    return await this.#execute[method](query.join(' ') + ';', values)
+    queryDebugger(this.#state)
+
+    return await this.#execute[method](query, values)
   }
 }
 

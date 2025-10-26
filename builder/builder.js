@@ -1,47 +1,45 @@
+const miniORM = require('./miniORM')
+
+/**@return {miniORM} */
 function selectAll() {
-  this.setExecuteMethod('all')
-  this.setState({
-    query: [`SELECT * FROM ${this.getTable()}`],
-  })
-  return this
+  return this.clone({ query: [`SELECT * FROM ${this.table}`], values: [] }, false, 'all')
 }
 
+/**
+ * @param {{column: number|string}} condition
+ * @return {miniORM} 
+ * */
 function where(condition) {
-  const query = this.getState().query
-  const values = this.getState().values
+  let state = {query: [], values: []}
+  const query = this.state.query
+  const values = this.state.values
 
   const key = Object.keys(condition)[0]
   const value = condition[key]
 
-  if ('method' in this.getState()) {
-    this.setState({ query: [...query, `${key} = ?`], values: [...values, value]})
+  if (this.operatorSignal) {
+    state = { query: [...query, `${key} = ?`], values: [...values, value] }
   } else {
-    this.setState({ query: [...query, `WHERE ${key} = ?`], values: [value] })
+    state = { query: [...query, `WHERE ${key} = ?`], values: [value] }
   }
 
-  return this
+  return this.clone(state)
 }
 
+/**@return {miniORM} */
 function or() {
-  const query = this.getState().query
+  const query = this.state.query
+  const values = this.state.values
 
-  this.setState({
-    method: 'or',
-    query: [...query, 'OR'],
-    values: [...this.getState().values],
-  })
-  return this
+  return this.clone({query: [...query, 'OR'], values: [...values], },true)
 }
 
+/**@return {miniORM} */
 function and() {
-  const query = this.getState().query
+  const query = this.state.query
+  const values = this.state.values
 
-  this.setState({
-    method: 'and',
-    query: [...query, 'AND'],
-    values: [...this.getState().values],
-  })
-  return this
+  return this.clone({ query: [...query, 'AND'], values: [...values]}, true)
 }
 
 module.exports = { selectAll, where, or, and }
