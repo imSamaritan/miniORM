@@ -1,4 +1,4 @@
-const miniORM = require('./miniORM')
+const miniORM = require('../miniORM')
 
 /**@return {miniORM} */
 function selectAll() {
