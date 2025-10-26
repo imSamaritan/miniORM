@@ -4,11 +4,7 @@ const miniORM = require('./miniORM')
 
 dotenv.config()
 
-const model = new miniORM({
-  user: 'root',
-  database: 'blog',
-})
-
+const model = new miniORM()
 model.setTable('posts')
 
 const PORT = process.env.PORT || 3000
@@ -17,8 +13,8 @@ const app = express()
 app.get('/', async (req, res) => {
   try {
     const results = await model
-      .selectAll()
-      .where({ post_id: 1 })
+      .select(['post_author', 'post_title', 'post_body'])
+      .where({post_author: 'John Doe'})
       .done()
     return res.send(results[0][0])
   } catch (error) {
