@@ -10,7 +10,7 @@ class Execute {
     this.#options = options
   }
 
-  /*** @returns {mysql.Pool} **/
+  /*** @returns {Promise<mysql.Pool>} **/
   async #connect() {
     try {
       return await dbConnection(this.#options)
