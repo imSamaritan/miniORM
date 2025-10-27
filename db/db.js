@@ -10,56 +10,68 @@ const optionsDebug = debug('miniORM:options')
 let pool = null
 
 /**
+ * @type {mysql.Pool|null} poolPromise
+ */
+let poolPromise = null
+
+/**
  * @param {mysql.PoolOptions} options
  * @return {mysql.Pool}
  */
 
-const dbConnection = async (options) => {
+const dbConnection = async (options = {}) => {
   if (pool) return pool
 
-  const DB_HOST = options.host || process.env.DB_HOST || 'localhost'
-  const DB_USER = options.user || process.env.DB_USER || 'root'
-  const DB_PASSWORD = options.password || process.env.DB_PASSWORD || ''
-  const DB_NAME = options.database || process.env.DB_NAME
-  const DB_PORT = Number(options.port || process.env.DB_PORT || 3306)
-  const CONNECTION_LIMIT = Number(
-    options.connectionLimit || process.env.CONNECTION_LIMIT || 10
-  )
+  if (poolPromise) return poolPromise
 
-  /**
-   * @type {mysql.PoolOptions} config
-   */
-  const config = {
-    host: DB_HOST,
-    user: DB_USER,
-    password: DB_PASSWORD,
-    port: DB_PORT,
-    database: DB_NAME,
-    waitForConnections: true,
-    connectionLimit: CONNECTION_LIMIT,
-  }
+  poolPromise = new Promise(async function (resolve, reject) {
+    const DB_HOST = options.host || process.env.DB_HOST || 'localhost'
+    const DB_USER = options.user || process.env.DB_USER || 'root'
+    const DB_PASSWORD = options.password || process.env.DB_PASSWORD || ''
+    const DB_NAME = options.database || process.env.DB_NAME
+    const DB_PORT = Number(options.port || process.env.DB_PORT || 3306)
+    const CONNECTION_LIMIT = Number(
+      options.connectionLimit || process.env.CONNECTION_LIMIT || 10
+    )
 
-  try {
-    if (!DB_NAME)
-      throw new Error(
-        'Missing DB_NAME config in the .env or connection options {database: null}'
-      )
+    /**
+     * @type {mysql.PoolOptions} config
+     */
+    const config = {
+      host: DB_HOST,
+      user: DB_USER,
+      password: DB_PASSWORD,
+      port: DB_PORT,
+      database: DB_NAME,
+      waitForConnections: true,
+      connectionLimit: CONNECTION_LIMIT,
+    }
 
-    pool = mysql.createPool(config)
-  } catch (error) {
-    dbDebug(`Connection error : ${error.message}`)
-    throw error
-  }
+    try {
+      if (!DB_NAME || !DB_HOST || !DB_USER || DB_PASSWORD === undefined)
+        throw new Error(
+          'Missing essential DB config (HOST, USER, PASSWORD, or NAME) in the .env or connection options.'
+        )
 
-  optionsDebug('Config from passed via options object:')
-  optionsDebug(options)
+      pool = mysql.createPool(config)
 
-  optionsDebug('_________________________________________________________')
+      optionsDebug('Config from passed via options object:')
+      optionsDebug(options)
 
-  optionsDebug('Config from .env file :')
-  optionsDebug(config)
+      optionsDebug('_________________________________________________________')
 
-  return pool
+      optionsDebug('Config from .env file :')
+      optionsDebug(config)
+
+      resolve(pool)
+    } catch (error) {
+      dbDebug(`Connection error : ${error.message}`)
+      poolPromise = null
+      reject(error)
+    }
+  })
+
+  return poolPromise
 }
 
 module.exports = dbConnection
