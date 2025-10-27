@@ -10,13 +10,13 @@ const optionsDebug = debug('miniORM:options')
 let pool = null
 
 /**
- * @type {mysql.Pool|null} poolPromise
+ * @type {Promise<mysql.Pool>|null} poolPromise
  */
 let poolPromise = null
 
 /**
  * @param {mysql.PoolOptions} options
- * @return {mysql.Pool}
+ * @return {Promise<mysql.Pool>}
  */
 
 const dbConnection = async (options = {}) => {
@@ -27,7 +27,7 @@ const dbConnection = async (options = {}) => {
   poolPromise = new Promise(async function (resolve, reject) {
     const DB_HOST = options.host || process.env.DB_HOST || 'localhost'
     const DB_USER = options.user || process.env.DB_USER || 'root'
-    const DB_PASSWORD = options.password || process.env.DB_PASSWORD || ''
+    const DB_PASSWORD = options.password || process.env.DB_PASSWORD
     const DB_NAME = options.database || process.env.DB_NAME
     const DB_PORT = Number(options.port || process.env.DB_PORT || 3306)
     const CONNECTION_LIMIT = Number(
@@ -48,9 +48,9 @@ const dbConnection = async (options = {}) => {
     }
 
     try {
-      if (!DB_NAME || !DB_HOST || !DB_USER || DB_PASSWORD === undefined)
+      if (!DB_NAME || !DB_HOST || !DB_USER || DB_PASSWORD === '')
         throw new Error(
-          'Missing essential DB config (HOST, USER, PASSWORD, or NAME) in the .env or connection options.'
+          'Missing essential DB config (HOST, USER, NAME, or a non-empty PASSWORD) in the .env or connection options.'
         )
 
       pool = mysql.createPool(config)
