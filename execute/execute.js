@@ -13,8 +13,7 @@ class Execute {
   /*** @returns {mysql.Pool} **/
   async #connect() {
     try {
-      if (this.#options) return await dbConnection(this.#options)
-      return await dbConnection()
+      return await dbConnection(this.#options)
     } catch (error) {
       throw error
     }
@@ -23,9 +22,7 @@ class Execute {
   async all(query, values = []) {
     try {
       const pool = await this.#connect()
-
-      if (values.length < 0) return await pool.execute(query)
-      else return await pool.execute(query, values)
+      return await pool.execute(query, values)
     } catch (error) {
       throw error
     }
