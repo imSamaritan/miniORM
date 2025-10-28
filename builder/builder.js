@@ -9,17 +9,25 @@ function selectAll() {
  * @param {string[]} columns
  * @return {miniORM}
  * */
-function select(columns) {
-  if (!Array.isArray(columns)) {
-    throw new Error(
-      '"SELECT" method takes columns as a list[field1, field2,...] or [field]'
-    )
+function select(...columns) {
+  //Check if there's a column atleast
+  if (columns.length < 1) {
+    throw new Error('Column or columns, required!')
   }
 
-  return this.clone({
-    query: [`SELECT ${columns.join(', ')} FROM ${this.table}`],
-    values: [],
-  })
+  //Check if there are empty columns or not
+  if (columns.includes('')) {
+    throw new Error("List of columns can't includes empty column names!")
+  }
+
+  return this.clone(
+    {
+      query: [`SELECT ${columns.join(', ')} FROM ${this.table}`],
+      values: [],
+    },
+    false,
+    'all'
+  )
 }
 
 /**
@@ -45,14 +53,12 @@ function where(condition) {
 /**@return {miniORM} */
 function or() {
   const { query, values } = this.state
-
   return this.clone({ query: [...query, 'OR'], values: [...values] }, true)
 }
 
 /**@return {miniORM} */
 function and() {
   const { query, values } = this.state
-
   return this.clone({ query: [...query, 'AND'], values: [...values] }, true)
 }
 

@@ -13,7 +13,7 @@ const app = express()
 app.get('/', async (req, res) => {
   try {
     const results = await model
-      .select(['post_author', 'post_title', 'post_body'])
+      .select('post_id', 'post_author')
       .where({ post_author: 'John Doe' })
       .done()
     return res.send(results[0][0])
