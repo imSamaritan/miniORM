@@ -11,12 +11,17 @@ class miniORM {
   #execute
   #table
 
-  /** 
+  /**
    * @param {{query: string[], values: (number|string)[]}} state
    * @param {boolean} isOperator
    * @param {string} executeMethod
    */
-  constructor(options = {}, state = { query: [], values: [] }, isOperator, executeMethod) {
+  constructor(
+    options = {},
+    state = { query: [], values: [] },
+    isOperator,
+    executeMethod
+  ) {
     this.#options = options
     this.#state = state
     this.#isOperator = isOperator
@@ -24,25 +29,29 @@ class miniORM {
 
     if (options) this.#execute = new Execute(options)
     else this.#execute = new Execute()
-    
   }
 
-  /** 
+  /**
    * @param {{query: string[], values: (number|string)[]}} state
    * @param {boolean} isOperator
    * @param {string} executeMethod
-   * 
+   *
    * @return {miniORM}
    */
   clone(state, isOperator = false, executeMethod = this.#executeMethod) {
-    const instance = new miniORM(this.#options, state, isOperator, executeMethod)
+    const instance = new miniORM(
+      this.#options,
+      state,
+      isOperator,
+      executeMethod
+    )
     instance.setTable(this.#table)
     instance.#execute = this.#execute
     return instance
   }
 
   /**
-   * @param {string} table 
+   * @param {string} table
    * @return {void}
    */
   setTable(table) {
@@ -54,7 +63,7 @@ class miniORM {
     return this.#table
   }
 
-   /*** @return {{query: string[], values: (number|string)[]}}*/
+  /*** @return {{query: string[], values: (number|string)[]}}*/
   get state() {
     return this.#state
   }
@@ -66,12 +75,15 @@ class miniORM {
   /**@return {Promise<mysql.QueryResult>} */
   async done() {
     const method = this.#executeMethod
-    const query = this.#state.query.join(' ') + ';'
-    const values = this.#state.values
+    const { query, values } = this.#state
+    const queryLastPart = query[query.length - 1]
+
+    if (queryLastPart === 'AND' || queryLastPart === 'OR') {
+      throw new Error(`SQL query can not end with a logical operator [${queryLastPart}]`)
+    }
 
     queryDebugger(this.#state)
-
-    return await this.#execute[method](query, values)
+    return await this.#execute[method](query.join(' ') + ';', values)
   }
 }
 
