@@ -2,11 +2,7 @@ const miniORM = require('../miniORM')
 
 /**@return {miniORM} */
 function selectAll() {
-  return this.clone(
-    { query: [`SELECT * FROM ${this.table}`], values: [] },
-    false,
-    'all'
-  )
+  return this.clone({ query: [`SELECT * FROM ${this.table}`], values: [] })
 }
 
 /**
@@ -14,19 +10,11 @@ function selectAll() {
  * @return {miniORM}
  * */
 function select(columns) {
-  if (!Array.isArray(columns))
-    throw new Error(
-      '"SELECT" method takes columns as a list[field1, field2,...] or [field]'
-    )
+  if (!Array.isArray(columns)) {
+    throw new Error('"SELECT" method takes columns as a list[field1, field2,...] or [field]')
+  }
 
-  return this.clone(
-    {
-      query: [`SELECT ${columns.join(', ')} FROM ${this.table}`],
-      values: [],
-    },
-    false,
-    'all'
-  )
+  return this.clone({query: [`SELECT ${columns.join(', ')} FROM ${this.table}`], values: []})
 }
 
 /**
