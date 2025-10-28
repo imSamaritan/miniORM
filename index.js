@@ -14,7 +14,8 @@ app.get('/', async (req, res) => {
   try {
     const results = await model
       .select(['post_author', 'post_title', 'post_body'])
-      .where({post_author: 'John Doe'})
+      .where({ post_author: 'John Doe' })
+      .or()
       .done()
     return res.send(results[0][0])
   } catch (error) {
