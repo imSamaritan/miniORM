@@ -1,10 +1,10 @@
 import express from 'express'
 import dotenv from '@dotenvx/dotenvx'
-import Builder from './builder/Builder.js'
+import miniORM from './miniORM.js'
 
 dotenv.config()
 
-const model = new Builder()
+const model = new miniORM()
 model.setTable('posts')
 
 const PORT = process.env.PORT || 3000

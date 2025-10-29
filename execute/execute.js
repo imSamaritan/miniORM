@@ -22,7 +22,8 @@ class Execute {
   async all(query, values = []) {
     try {
       const pool = await this.#connect()
-      return await pool.execute(query, values)
+      const [rows] = await pool.execute(query, values)
+      return rows
     } catch (error) {
       throw error
     }
