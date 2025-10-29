@@ -16,7 +16,7 @@ class miniORM {
    * @param {boolean} isOperator
    * @param {string} executeMethod
    */
-  constructor(options = {}, state = { query: [], values: [] }, isOperator, executeMethod = 'all') {
+  constructor(options = {}, state = { query: [], values: [] }, isOperator = false, executeMethod = 'all') {
     this.#options = options
     this.#state = state
     this.#isOperator = isOperator
@@ -33,7 +33,7 @@ class miniORM {
    *
    * @return {miniORM}
    */
-  clone(state, isOperator, executeMethod) {
+  clone(state, isOperator = this.#isOperator, executeMethod = this.#executeMethod) {
     const instance = new miniORM(this.#options, state, isOperator, executeMethod)
     instance.setTable(this.#table)
     instance.#execute = this.#execute
