@@ -13,12 +13,12 @@ const app = express()
 app.get('/', async (req, res) => {
   try {
     const results = await model
-      .select('post_id', 'post_author')
-      .where({ post_author: 'John Doe' })
+      .select(null)
+      .where({post_author: 'imsamaritan'})
       .done()
-    return res.send(results[0][0])
+    return res.send(results)
   } catch (error) {
-    throw error
+    res.status(400).send(error.message)
   }
 })
 

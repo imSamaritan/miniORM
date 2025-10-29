@@ -1,33 +1,34 @@
 const miniORM = require('../miniORM')
 
-/**@return {miniORM} */
-function selectAll() {
-  return this.clone({ query: [`SELECT * FROM ${this.table}`], values: [] })
-}
-
 /**
  * @param {string[]} columns
  * @return {miniORM}
  * */
 function select(...columns) {
   //Check if there's a column atleast
-  if (columns.length < 1) {
+  console.log(columns)
+  if (columns.length < 1) 
     throw new Error('Column or columns, required!')
-  }
+  
 
   //Check if there are empty columns or not
-  if (columns.includes('')) {
-    throw new Error("List of columns can't includes empty column names!")
-  }
+  if (columns.includes('') || columns.includes(null) || columns.includes(undefined)) 
+    throw new Error(
+      "List of columns can't includes [empty, null or undefined] column(s) name(s)!"
+    )
+  
 
   return this.clone(
-    {
-      query: [`SELECT ${columns.join(', ')} FROM ${this.table}`],
-      values: [],
-    },
+    { query: [`SELECT ${columns.join(', ')} FROM ${this.table}`], values: [] },
     false,
     'all'
   )
+}
+
+/**@return {miniORM} */
+function selectAll() {
+  if (arguments.length > 0) throw new Error('selectAll method take none or 0 arguements!')
+  return this.select('*')
 }
 
 /**
