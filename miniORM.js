@@ -16,12 +16,7 @@ class miniORM {
    * @param {boolean} isOperator
    * @param {string} executeMethod
    */
-  constructor(
-    options = {},
-    state = { query: [], values: [] },
-    isOperator = false,
-    executeMethod = 'all'
-  ) {
+  constructor(options = {}, state = { query: [], values: [] }, isOperator, executeMethod = 'all') {
     this.#options = options
     this.#state = state
     this.#isOperator = isOperator
@@ -38,13 +33,8 @@ class miniORM {
    *
    * @return {miniORM}
    */
-  clone(state, isOperator = false, executeMethod = 'all') {
-    const instance = new miniORM(
-      this.#options,
-      state,
-      isOperator,
-      executeMethod
-    )
+  clone(state, isOperator, executeMethod) {
+    const instance = new miniORM(this.#options, state, isOperator, executeMethod)
     instance.setTable(this.#table)
     instance.#execute = this.#execute
     return instance
@@ -74,8 +64,9 @@ class miniORM {
 
   /**@return {Promise<mysql.QueryResult>} */
   async done() {
-    const method = this.#executeMethod
     const { query, values } = this.#state
+    const method = this.#executeMethod
+    const sql = query.join(' ') + ';'
     const queryLastPart = query[query.length - 1]
 
     if (queryLastPart === 'AND' || queryLastPart === 'OR') {
@@ -83,7 +74,8 @@ class miniORM {
     }
 
     queryDebugger(this.#state)
-    return await this.#execute[method](query.join(' ') + ';', values)
+    
+    return await this.#execute[method](sql, values)
   }
 }
 
