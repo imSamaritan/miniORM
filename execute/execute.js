@@ -1,5 +1,5 @@
-const mysql = require('mysql2/promise')
-const dbConnection = require('../db/db')
+import mysql from 'mysql2/promise'
+import dbConnection from '../db/db.js'
 
 class Execute {
   /*** @type { mysql.PoolOptions } options **/
@@ -29,4 +29,4 @@ class Execute {
   }
 }
 
-module.exports = Execute
+export default Execute
