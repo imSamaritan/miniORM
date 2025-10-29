@@ -1,5 +1,5 @@
-const mysql = require('mysql2/promise')
-const debug = require('debug')
+import mysql from 'mysql2/promise'
+import debug from 'debug'
 
 const dbDebug = debug('minORM:db')
 const optionsDebug = debug('miniORM:options')
@@ -31,7 +31,7 @@ const dbConnection = async (options = {}) => {
     const DB_NAME = options.database || process.env.DB_NAME
     const DB_PORT = Number(options.port || process.env.DB_PORT || 3306)
     const CONNECTION_LIMIT = Number(
-      options.connectionLimit || process.env.CONNECTION_LIMIT || 10
+      options.connectionLimit || process.env.CONNECTION_LIMIT || 10,
     )
 
     /**
@@ -50,7 +50,7 @@ const dbConnection = async (options = {}) => {
     try {
       if (!DB_NAME || !DB_HOST || !DB_USER || DB_PASSWORD === '')
         throw new Error(
-          'Missing essential DB config (HOST, USER, NAME, or a non-empty PASSWORD) in the .env or connection options.'
+          'Missing essential DB config (HOST, USER, NAME, or a non-empty PASSWORD) in the .env or connection options.',
         )
 
       pool = mysql.createPool(config)
@@ -74,4 +74,4 @@ const dbConnection = async (options = {}) => {
   return poolPromise
 }
 
-module.exports = dbConnection
+export default dbConnection
