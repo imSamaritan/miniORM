@@ -1,21 +1,5 @@
-import miniORM from '../miniORM.js'
-
-class Builder extends miniORM {
-  /**
-   * @param {mysql.PoolOptions} options
-   * @param {{query: string[], values: (number|string)[]}} state
-   * @param {boolean} isOperator
-   * @param {string} executeMethod
-   */
-  constructor(
-    options = {},
-    state = { query: [], values: [] },
-    isOperator = false,
-    executeMethod = 'all',
-  ) {
-    super(options, state, isOperator, executeMethod)
-  }
-
+class Builder {
+ 
   /**
    * @param {string[]} columns
    * @return {Builder}

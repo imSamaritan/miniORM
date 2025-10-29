@@ -1,10 +1,11 @@
+import Builder from './builder/Builder.js'
 import mysql from 'mysql2/promise'
 import debug from 'debug'
 import Execute from './execute/execute.js'
 
 const queryDebugger = debug('miniORM:query')
 
-class miniORM {
+class miniORM extends Builder {
   #options
   #state
   #isOperator
@@ -23,6 +24,7 @@ class miniORM {
     isOperator = false,
     executeMethod = 'all',
   ) {
+    super()
     this.#options = options
     this.#state = state
     this.#isOperator = isOperator
@@ -96,9 +98,5 @@ class miniORM {
   }
 }
 
-// Export Builder module for named import
-import Builder from './builder/Builder.js'
-
-// Export miniORM as default and Builder as named export
+// Export miniORM as default
 export default miniORM
-export { Builder }
