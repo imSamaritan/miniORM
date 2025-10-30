@@ -1,15 +1,13 @@
 # miniORM
 
-A lightweight Object-Relational Mapping (ORM) library for Node.js with MySQL support, built with clean inheritance architecture.
+A lightweight Object-Relational Mapping (ORM) library for Node.js with MySQL support.
 
 ## Architecture
 
-The miniORM follows a clean inheritance pattern:
+miniORM uses a clean inheritance pattern where the main `miniORM` class extends the `Builder` class:
 
-- **miniORM (Base Class)**: Core functionality including connection management, state handling, and query execution
-- **Builder (Extended Class)**: Query building methods like `select()`, `where()`, `and()`, `or()`
-
-This separation provides better modularity, easier testing, and cleaner code organization.
+- **Builder (Base Class)**: Query building methods like `select()`, `where()`, `and()`, `or()`
+- **miniORM (Extended Class)**: Core functionality including connection management, state handling, and query execution
 
 ## Installation
 
@@ -35,10 +33,10 @@ CONNECTION_LIMIT=10
 ### Basic Usage
 
 ```javascript
-const Builder = require('./builder/Builder')
+import miniORM from './miniORM.js'
 
 // Create a new instance
-const model = new Builder()
+const model = new miniORM()
 model.setTable('users')
 
 // Build and execute queries
@@ -48,25 +46,9 @@ const users = await model
   .done()
 ```
 
-### Import Options
-
-```javascript
-// Option 1: Import Builder directly
-const Builder = require('./builder/Builder')
-const model = new Builder()
-
-// Option 2: Import from main module
-const miniORM = require('./miniORM')
-const model = new miniORM.Builder()
-
-// Option 3: Use core miniORM (without query building methods)
-const miniORM = require('./miniORM')
-const coreModel = new miniORM()
-```
-
 ## API Reference
 
-### Core Methods (miniORM)
+### Core Methods
 
 #### `setTable(tableName)`
 Set the table name for queries.
@@ -82,7 +64,7 @@ Execute the built query and return results.
 const results = await model.select('*').done()
 ```
 
-### Query Building Methods (Builder)
+### Query Building Methods
 
 #### `select(...columns)`
 Select specific columns.
@@ -100,15 +82,15 @@ model.selectAll()
 ```
 
 #### `where(condition)`
-Add WHERE condition.
+Add WHERE condition with a single key-value pair.
 
 ```javascript
 model.where({ id: 1 })
 model.where({ status: 'active' })
 ```
 
-#### `and()` / `or()`
-Add logical operators between conditions.
+#### `and()`
+Add AND operator between conditions.
 
 ```javascript
 model
@@ -116,6 +98,17 @@ model
   .where({ status: 'active' })
   .and()
   .where({ role: 'admin' })
+```
+
+#### `or()`
+Add OR operator between conditions.
+
+```javascript
+model
+  .select('*')
+  .where({ role: 'admin' })
+  .or()
+  .where({ role: 'moderator' })
 ```
 
 ## Examples
@@ -129,7 +122,7 @@ const activeUsers = await model
   .done()
 ```
 
-### Select with Multiple Conditions
+### Select with Multiple AND Conditions
 
 ```javascript
 const adminUsers = await model
@@ -151,19 +144,11 @@ const users = await model
   .done()
 ```
 
-## Architecture Benefits
-
-1. **Separation of Concerns**: Core functionality separated from query building
-2. **No Circular Dependencies**: Clean inheritance hierarchy
-3. **Extensible**: Easy to add new query methods to Builder class
-4. **Type Safety**: Proper inheritance chain for method chaining
-5. **Testable**: Each class can be tested independently
-
 ## Error Handling
 
 The ORM includes built-in validation:
 
-- Empty or null column names are rejected
+- Empty, null, or undefined column names are rejected
 - Queries cannot end with logical operators (AND/OR)
 - Missing database configuration throws descriptive errors
 
@@ -188,15 +173,13 @@ Debug namespaces:
 - `miniORM:db` - Database connection events
 - `miniORM:options` - Configuration options
 
-## Development
-
-### Project Structure
+## Project Structure
 
 ```
 miniORM/
-├── miniORM.js          # Base ORM class
+├── miniORM.js          # Main ORM class (extends Builder)
 ├── builder/
-│   └── Builder.js      # Query builder class (extends miniORM)
+│   └── builder.js      # Query builder base class
 ├── execute/
 │   └── execute.js      # Query execution logic
 ├── db/
@@ -204,13 +187,13 @@ miniORM/
 └── index.js           # Example application
 ```
 
-### Running the Example
+## Running the Example
 
 ```bash
 node index.js
 ```
 
-The example server will start on port 5500 (or PORT environment variable).
+The example server will start on port 3000 (or PORT environment variable) and demonstrates querying a 'posts' table.
 
 ## License
 
