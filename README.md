@@ -187,13 +187,174 @@ miniORM/
 └── index.js           # Example application
 ```
 
-## Running the Example
+## Library Usage in Production
 
-```bash
-node index.js
+### For Library Users
+
+miniORM automatically handles graceful shutdown by default - **no configuration required!**
+
+#### Default Behavior (Zero Configuration)
+
+```javascript
+import express from 'express'
+import miniORM from 'miniorm'
+
+const app = express()
+
+// That's it! Auto shutdown is enabled by default
+app.get('/', async (req, res) => {
+  const model = new miniORM()
+  model.setTable('users')
+  const users = await model.selectAll().done()
+  res.json(users)
+})
+
+app.listen(3000)
+// miniORM automatically handles SIGTERM, SIGINT, SIGUSR2, and errors
 ```
 
-The example server will start on port 3000 (or PORT environment variable) and demonstrates querying a 'posts' table.
+#### Disable Auto Shutdown (For Manual Control)
+
+```javascript
+import miniORM from 'miniorm'
+
+// Disable auto shutdown if you want full control
+miniORM.setAutoShutdown(false)
+
+// Now you handle shutdown yourself
+const customShutdown = async (signal) => {
+  console.log(`${signal} received. Custom shutdown logic...`)
+  
+  try {
+    await closeHttpServer()
+    await miniORM.closeConnection()
+    process.exit(0)
+  } catch (error) {
+    console.error('Error during shutdown:', error)
+    process.exit(1)
+  }
+}
+
+process.on('SIGTERM', () => customShutdown('SIGTERM'))
+process.on('SIGINT', () => customShutdown('SIGINT'))
+```
+
+#### Custom Shutdown Logic (Override Auto Behavior)
+
+```javascript
+import miniORM from 'miniorm'
+
+const beforeShutdown = async (signal) => {
+  console.log('Closing HTTP server...')
+  // Your custom pre-shutdown logic
+}
+
+const afterShutdown = async (signal) => {
+  console.log('Cleanup complete...')
+  // Your custom post-shutdown logic
+}
+
+// This overrides auto shutdown with custom callbacks
+miniORM.setupGracefulShutdown(beforeShutdown, afterShutdown)
+```
+
+### Available Methods
+
+#### `miniORM.setAutoShutdown(enabled)`
+Enable or disable automatic shutdown handling (enabled by default).
+
+```javascript
+// Disable auto shutdown for full manual control
+miniORM.setAutoShutdown(false)
+
+// Re-enable auto shutdown
+miniORM.setAutoShutdown(true)
+```
+
+#### `miniORM.setupGracefulShutdown(beforeShutdown?, afterShutdown?, signals?)`
+Override auto shutdown with custom callbacks or signals.
+
+**Parameters:**
+- `beforeShutdown` (optional): Function to run before closing database connections
+- `afterShutdown` (optional): Function to run after closing database connections  
+- `signals` (optional): Array of signals to listen for (defaults to `['SIGTERM', 'SIGINT', 'SIGUSR2']`)
+
+```javascript
+// Override auto shutdown with custom callbacks
+miniORM.setupGracefulShutdown(beforeCallback, afterCallback)
+
+// Override with custom signals
+miniORM.setupGracefulShutdown(null, null, ['SIGTERM', 'SIGINT', 'SIGHUP'])
+```
+
+#### `miniORM.gracefulShutdown(signal, beforeShutdown?, afterShutdown?)`
+Manual graceful shutdown method (used internally by auto shutdown).
+
+```javascript
+// Manual shutdown call
+await miniORM.gracefulShutdown('SIGTERM')
+
+// With custom callbacks
+await miniORM.gracefulShutdown('SIGINT', beforeFn, afterFn)
+```
+
+#### `miniORM.closeConnection()`
+Direct database connection cleanup (no signal handling).
+
+```javascript
+// Direct cleanup - use when auto shutdown is disabled
+try {
+  await miniORM.closeConnection()
+  console.log('All database connections closed')
+} catch (error) {
+  console.error('Error closing connections:', error)
+}
+```
+
+### Design Philosophy
+
+miniORM prioritizes **ease of use** while providing **control** when needed:
+
+- **Zero Configuration**: Auto shutdown works out of the box
+- **Prevents Memory Leaks**: Automatically closes connections on app termination
+- **Flexible Override**: Easy to customize or disable auto behavior
+- **Production Ready**: Handles SIGTERM, SIGINT, SIGUSR2, and error cases
+- **Developer Friendly**: Less boilerplate code, fewer forgotten cleanups
+
+## Running the Examples
+
+### Auto Shutdown Example (Recommended)
+```bash
+node auto-example.js
+```
+Zero configuration - just import and use! Auto shutdown handles everything.
+
+### Manual Control Example
+```bash
+node manual-control-example.js
+```
+For when you need complete control over shutdown behavior.
+
+### Legacy Examples
+```bash
+node index.js
+node example-app.js
+```
+
+### Comprehensive Usage Patterns
+```bash
+DEBUG=examples:*,miniORM:* node usage-examples.js
+```
+
+All examples start on port 3000 (or PORT environment variable) and demonstrate querying a 'posts' table.
+
+### Quick Start Recommendations
+
+**For Most Apps:** Just import and use - auto shutdown handles everything
+
+**For Custom Logic:** Use `miniORM.setupGracefulShutdown(beforeFn, afterFn)`
+
+**For Full Control:** Use `miniORM.setAutoShutdown(false)` and handle signals manually
 
 ## License
 
