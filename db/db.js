@@ -1,7 +1,7 @@
 import mysql from 'mysql2/promise'
 import debug from 'debug'
 
-const dbDebug = debug('minORM:db')
+const dbDebug = debug('miniORM:db')
 const optionsDebug = debug('miniORM:options')
 
 /**
@@ -74,4 +74,30 @@ const dbConnection = async (options = {}) => {
   return poolPromise
 }
 
+/**
+ * Closes the database connection pool and cleans up resources
+ * @return {Promise<void>}
+ */
+const closeConnection = async () => {
+  dbDebug('Attempting to close database connection...')
+
+  if (pool) {
+    try {
+      dbDebug('Closing connection pool...')
+      await pool.end()
+      dbDebug('Connection pool closed successfully')
+    } catch (error) {
+      dbDebug(`Error closing connection pool: ${error.message}`)
+      throw new Error(`Failed to close database connection: ${error.message}`)
+    } finally {
+      pool = null
+      poolPromise = null
+      dbDebug('Pool references cleared')
+    }
+  } else {
+    dbDebug('No active pool to close')
+  }
+}
+
 export default dbConnection
+export { closeConnection }
