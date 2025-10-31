@@ -1,5 +1,4 @@
 class Builder {
- 
   /**
    * @param {string[]} columns
    * @return {Builder}
