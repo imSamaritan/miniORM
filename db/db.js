@@ -15,10 +15,36 @@ let pool = null
 let poolPromise = null
 
 /**
+ * Auto-cleanup handler for graceful shutdown
+ * Ensures proper connection pool cleanup when the application exits
+ */
+const setupAutoCleanup = () => {
+  const cleanup = async () => {
+    if (pool) {
+      try {
+        dbDebug('Connection pool closing automatically on process exit')
+        await pool.end()
+        dbDebug('Connection pool closed automatically on process exit')
+      } catch (error) {
+        dbDebug(`Error during auto-cleanup: ${error.message}`)
+      } finally {
+        pool = null
+        poolPromise = null
+        dbDebug('Pool references reset to null')
+      }
+    }
+  }
+
+  // Register cleanup handlers for graceful shutdown
+  process.on('SIGINT', cleanup)
+  process.on('SIGTERM', cleanup)
+  process.on('exit', cleanup)
+}
+
+/**
  * @param {mysql.PoolOptions} options
  * @return {Promise<mysql.Pool>}
  */
-
 const dbConnection = async (options = {}) => {
   if (pool) return pool
 
@@ -36,6 +62,7 @@ const dbConnection = async (options = {}) => {
 
     /**
      * @type {mysql.PoolOptions} config
+     * Auto-closing configuration enforced for all consumers
      */
     const config = {
       host: DB_HOST,
@@ -55,14 +82,18 @@ const dbConnection = async (options = {}) => {
 
       pool = mysql.createPool(config)
 
+      // Setup auto-cleanup handlers (enforced for all consumers)
+      setupAutoCleanup()
+
       optionsDebug('Config from passed via options object:')
       optionsDebug(options)
 
       optionsDebug('_________________________________________________________')
 
-      optionsDebug('Config from .env file :')
+      optionsDebug('Config from .env file (auto-closing enforced):')
       optionsDebug(config)
 
+      dbDebug('Connection pool created with auto-closing configuration')
       resolve(pool)
     } catch (error) {
       dbDebug(`Connection error : ${error.message}`)
@@ -74,30 +105,4 @@ const dbConnection = async (options = {}) => {
   return poolPromise
 }
 
-/**
- * Closes the database connection pool and cleans up resources
- * @return {Promise<void>}
- */
-const closeConnection = async () => {
-  dbDebug('Attempting to close database connection...')
-
-  if (pool) {
-    try {
-      dbDebug('Closing connection pool...')
-      await pool.end()
-      dbDebug('Connection pool closed successfully')
-    } catch (error) {
-      dbDebug(`Error closing connection pool: ${error.message}`)
-      throw new Error(`Failed to close database connection: ${error.message}`)
-    } finally {
-      pool = null
-      poolPromise = null
-      dbDebug('Pool references cleared')
-    }
-  } else {
-    dbDebug('No active pool to close')
-  }
-}
-
 export default dbConnection
-export { closeConnection }
