@@ -38,8 +38,7 @@ class miniORM extends Builder {
     this.#isOperator = isOperator
     this.#executeMethod = executeMethod
 
-    if (options) this.#execute = new Execute(options)
-    else this.#execute = new Execute()
+    this.#execute = new Execute(options)
   }
 
   /**
