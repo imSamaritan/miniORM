@@ -39,61 +39,11 @@ const app = express()
 // Posts endpoint
 app.get('/', async (req, res) => {
   try {
-    const results = await postsModel
-      // .select('post_id', 'post_title', 'post_body')
-      // .where({ post_author: 'imsamaritan' })
-      .selectAll()
-      .done()
+    const results = await postsModel.select('*').done()
     return res.send(results)
   } catch (error) {
     res.status(400).send({ error: error.message })
   }
-})
-
-// Users endpoint (demonstrates multiple models)
-app.get('/users', async (req, res) => {
-  try {
-    const results = await usersModel
-      .select('id', 'name', 'email')
-      .where({ active: 1 })
-      .done()
-    return res.send(results)
-  } catch (error) {
-    res.status(400).send({ error: error.message })
-  }
-})
-
-// Categories endpoint
-app.get('/categories', async (req, res) => {
-  try {
-    const results = await categoriesModel
-      .selectAll()
-      .where({ parent_id: null })
-      .done()
-    return res.send(results)
-  } catch (error) {
-    res.status(400).send({ error: error.message })
-  }
-})
-
-// Status endpoint to show connection info
-app.get('/status', (req, res) => {
-  res.json({
-    message: 'miniORM Auto-closing Demo',
-    features: {
-      auto_closing: true,
-      manual_closing: false,
-      shared_pool: true,
-      process_exit_cleanup: true,
-    },
-    endpoints: [
-      'GET / - Posts by imsamaritan',
-      'GET /users - Active users',
-      'GET /categories - Top-level categories',
-      'GET /status - This status page',
-    ],
-    note: 'Connection pool will automatically close when server shuts down',
-  })
 })
 
 const server = app.listen(PORT, () => {
