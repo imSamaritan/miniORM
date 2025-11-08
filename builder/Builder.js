@@ -31,9 +31,12 @@ class Builder {
     return this.select('*')
   }
 
-  /** @param {string} column @param {string} operator @param {any} value @return miniORM*/
+  /**
+  @param {string} column 
+  @param {string} operator 
+  @param {boolean|number|string|object} value 
+  @return {Builder}*/
   where(column, operator, value) {
-
     let state = { query: [], values: [] }
     const argumentsCount = arguments.length
     const { query, values } = this.state
@@ -49,8 +52,8 @@ class Builder {
     
     const valueIsAnObject = value instanceof Object
 
-    if (argumentsCount < 3) 
-      throw new Error('Where method takes 3 arguments!')
+    if (argumentsCount < 3 || argumentsCount > 3) 
+      throw new Error('Where method takes 3 arguments (column,operator,value)!')
     
     if (columnIsNotStringOrEmpty)
       throw new Error('Column should be string type and not be empty')
@@ -109,6 +112,31 @@ class Builder {
     }
 
     return this.clone(state)
+  }
+  
+  /**
+  @param {string} column 
+  @param {string} operator 
+  @param {boolean|number|string|object} value 
+  @return {Builder}*/
+  orWhere(column, operator, value) {
+    const {query, values} = this.state
+    const queryLastPart = query[query.length - 1]
+    const whereMethodNotUsed = ! query.join('').includes('WHERE')
+  
+    if (queryLastPart === 'AND' || queryLastPart === 'OR') {
+      throw new Error('"orWhere" method can not be called after and()/or() method operator!')
+    }
+    
+    if (whereMethodNotUsed) {
+      throw new Error('"orWhere" method must be chained after the "where" method!')
+    }
+    
+    const state = {query: [...query, 'OR'], values: [...values]}
+    const orWhereInstance = this.clone(state, true)
+    
+    const builder = orWhereInstance.where(column, operator, value)
+    return builder
   }
 
   /** @return {Builder}*/

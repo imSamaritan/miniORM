@@ -7,7 +7,7 @@ A lightweight Object-Relational Mapping (ORM) library for Node.js with MySQL sup
 - **Immutable Builder Pattern**: Each query method returns a new instance, preserving immutability
 - **Singleton Connection Pool**: Single shared pool across all miniORM instances with automatic cleanup
 - **Flexible WHERE Conditions**: Support for multiple operators and type casting
-- **Logical Operators**: Chain conditions with AND/OR operators
+- **Logical Operators**: Chain conditions with AND/OR operators and orWhere method
 - **Auto Resource Management**: Pool automatically closes on process exit
 - **Debug Support**: Built-in debugging with configurable namespaces
 - **ES6 Module Support**: Full ESM compatibility
@@ -54,6 +54,13 @@ const adminUsers = await model
   .where('status', '=', 'active')
   .and()
   .where('role', '=', 'admin')
+  .done()
+
+// Using orWhere for OR conditions
+const privilegedUsers = await model
+  .select('id', 'name', 'role')
+  .where('role', '=', 'admin')
+  .orWhere('role', '=', 'moderator')
   .done()
 ```
 
@@ -103,8 +110,8 @@ model.select('*') // Select all columns
 ```
 
 **Throws:**
-- Error if no columns provided
-- Error if columns contain empty, null, or undefined values
+- Error if no columns provided: "Column or columns, required!"
+- Error if columns contain empty, null, or undefined values: "List of columns can't include [empty, null or undefined] column(s) name(s)!"
 
 #### `selectAll()`
 Select all columns (equivalent to `select('*')`). Takes no arguments.
@@ -114,7 +121,7 @@ model.selectAll()
 ```
 
 **Throws:**
-- Error if any arguments are provided
+- Error if any arguments are provided: "selectAll method takes none or 0 arguments!"
 
 #### `where(column, operator, value)`
 Add WHERE condition to the query.
@@ -133,16 +140,30 @@ model.where('active', '=', true)
 - **Object with type casting**:
 ```javascript
 model.where('age', '>', { value: '25', type: 'number' })
-model.where('score', '=', { value: true, type: 'boolean' })
+model.where('score', '=', { value: 'true', type: 'boolean' })
 model.where('name', '=', { value: 123, type: 'string' })
 ```
 
 **Throws:**
-- Error if not exactly 3 arguments provided
-- Error if column is not a string or is empty
-- Error if operator is not supported
-- Error if value object is missing required keys
-- Error if value object contains invalid data
+- Error if not exactly 3 arguments: "Where method takes 3 arguments (column,operator,value)!"
+- Error if column is not a string or is empty: "Column should be string type and not be empty"
+- Error if operator is not supported: "Supported operators (=,!=,<>,>,>=,<,<=,LIKE,NOT LIKE)"
+- Error if value object is missing required keys: "Value key is required and must carry a valid value!" or "Type key is required and must contain a string type as value"
+- Error if value object contains invalid data: "Value can not be (null, undefined, {}, []) or empty!"
+
+#### `orWhere(column, operator, value)`
+Add OR WHERE condition to the query. Must be chained after an initial `where()` call.
+
+```javascript
+model
+  .select('*')
+  .where('role', '=', 'admin')
+  .orWhere('role', '=', 'moderator')
+```
+
+**Throws:**
+- Error if called after and()/or(): "orWhere method can not be called after and()/or() method operator!"
+- Error if called before where(): "orWhere method must be chained after the where method!"
 
 #### `and()`
 Add AND operator between conditions.
@@ -227,12 +248,19 @@ const adminUsers = await model
   .where('role', '=', 'admin')
   .done()
 
-// OR condition
-const privilegedUsers = await model
+// OR condition using or() method
+const privilegedUsers1 = await model
   .select('id', 'name', 'role')
   .where('role', '=', 'admin')
   .or()
   .where('role', '=', 'moderator')
+  .done()
+
+// OR condition using orWhere() method
+const privilegedUsers2 = await model
+  .select('id', 'name', 'role')
+  .where('role', '=', 'admin')
+  .orWhere('role', '=', 'moderator')
   .done()
 
 // Mixed conditions
@@ -241,8 +269,7 @@ const complexQuery = await model
   .where('status', '=', 'active')
   .and()
   .where('age', '>=', 18)
-  .and()
-  .where('country', '=', 'US')
+  .orWhere('verified', '=', true)
   .done()
 ```
 
@@ -354,6 +381,14 @@ try {
   console.error(error.message)
   // "SQL query can not end with a logical operator [AND]"
 }
+
+try {
+  // This will throw - orWhere called incorrectly
+  await model.select('*').and().orWhere('status', '=', 'active').done()
+} catch (error) {
+  console.error(error.message)
+  // "orWhere method can not be called after and()/or() method operator!"
+}
 ```
 
 ### WHERE Condition Errors
@@ -435,6 +470,7 @@ Builder (Base Class)
 ├── select()
 ├── selectAll()
 ├── where()
+├── orWhere()
 ├── and()
 ├── or()
 └── clone()
@@ -458,7 +494,7 @@ base.setTable('users')
 
 const query1 = base.select('id', 'name')       // New instance
 const query2 = query1.where('status', '=', 'active')  // New instance
-const query3 = query2.and()                    // New instance
+const query3 = query2.orWhere('role', '=', 'admin')   // New instance
 
 // Original base instance remains unchanged
 console.log(base.state) // { query: [], values: [] }
@@ -506,7 +542,7 @@ miniORM/
 │   ├── auto-closing-demo.js    # Connection cleanup demo
 │   └── test-auto-closing.js    # Auto-cleanup tests
 ├── auto-example.js        # Basic usage example with Express
-├── usage-examples.js      # Advanced patterns (contains unimplemented features)
+├── usage-examples.js      # Advanced patterns (contains planned features)
 ├── index.js               # Production example
 └── README.md              # This file
 ```
@@ -556,15 +592,16 @@ const activeQuery = activeUsersBase
   .select('id', 'name', 'email')
   .where('status', '=', 'active')
 
-// Extend with different conditions
-const adminUsers = await activeQuery
-  .and()
-  .where('role', '=', 'admin')
+// Extend with different conditions using orWhere
+const adminOrModeratorUsers = await activeQuery
+  .orWhere('role', '=', 'admin')
+  .orWhere('role', '=', 'moderator')
   .done()
 
-const moderatorUsers = await activeQuery
+// Extend with AND conditions
+const activeAdminUsers = await activeQuery
   .and()
-  .where('role', '=', 'moderator')
+  .where('role', '=', 'admin')
   .done()
 ```
 
@@ -576,19 +613,98 @@ async function getUsers(filters) {
   query.setTable('users')
   query = query.selectAll()
   
+  let hasConditions = false
+  
   if (filters.status) {
     query = query.where('status', '=', filters.status)
+    hasConditions = true
   }
   
   if (filters.minAge) {
-    if (filters.status) query = query.and()
+    if (hasConditions) {
+      query = query.and()
+    }
     query = query.where('age', '>=', filters.minAge)
+    hasConditions = true
+  }
+  
+  if (filters.role && hasConditions) {
+    query = query.orWhere('role', '=', filters.role)
+  } else if (filters.role) {
+    query = query.where('role', '=', filters.role)
   }
   
   return await query.done()
 }
 
-const results = await getUsers({ status: 'active', minAge: 18 })
+const results = await getUsers({ status: 'active', minAge: 18, role: 'admin' })
+```
+
+## Working Example
+
+Here's a complete working example based on the actual implementation:
+
+```javascript
+import express from 'express'
+import dotenv from '@dotenvx/dotenvx'
+import miniORM from './miniORM.js'
+
+// Load environment variables
+dotenv.config()
+
+const app = express()
+const PORT = process.env.PORT || 3000
+
+// Create model instances
+const postsModel = new miniORM()
+const usersModel = new miniORM()
+
+postsModel.setTable('posts')
+usersModel.setTable('users')
+
+// Get posts with complex conditions
+app.get('/', async (req, res) => {
+  try {
+    const results = await postsModel
+      .selectAll()
+      .where('post_id', '>', 2)
+      .orWhere('post_id', '<>', { value: 1, type: 'string' })
+      .done()
+    
+    res.json(results)
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+// Get active users
+app.get('/users', async (req, res) => {
+  try {
+    const results = await usersModel
+      .select('id', 'name', 'email')
+      .where('status', '=', 'active')
+      .done()
+    
+    res.json(results)
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+// Start server with automatic cleanup
+const server = app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`)
+  console.log('✨ Auto shutdown enabled - press Ctrl+C to gracefully stop!')
+})
+
+// Graceful shutdown (connection pool closes automatically)
+process.on('SIGINT', () => {
+  console.log('\n🛑 Received shutdown signal')
+  server.close(() => {
+    console.log('✅ Server closed')
+    console.log('🔌 Connection pool will close automatically')
+  })
+})
 ```
 
 ## License
