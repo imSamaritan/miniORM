@@ -39,7 +39,10 @@ const app = express()
 // Posts endpoint
 app.get('/', async (req, res) => {
   try {
-    const results = await postsModel.select('*').done()
+    const results = await postsModel
+      .selectAll()
+      .where('post_author', 'LIKE', '%_rita_%')
+      .done()
     return res.send(results)
   } catch (error) {
     res.status(400).send({ error: error.message })
