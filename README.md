@@ -2,27 +2,20 @@
 
 A lightweight Object-Relational Mapping (ORM) library for Node.js with MySQL support and automatic connection pool management.
 
-## Architecture
-
-miniORM follows a clean class-based inheritance pattern with automatic resource management:
-
-- **Builder (Base Class)**: Core query building methods (`select()`, `selectAll()`, `and()`, `or()`)
-- **miniORM (Extended Class)**: Main ORM functionality including connection management, state handling, and execution
-- **Execute Module**: Handles SQL query execution using mysql2 promise interface
-- **DB Module**: Manages singleton connection pool with automatic cleanup on process termination
-
-## Key Features
+## Features
 
 - **Immutable Builder Pattern**: Each query method returns a new instance, preserving immutability
-- **Singleton Connection Pool**: Single shared pool across all miniORM instances with promise-based initialization
-- **Automatic Cleanup**: Pool automatically closes on process exit (SIGINT, SIGTERM, exit events)
-- **Debug Support**: Built-in debugging with configurable namespaces using the `debug` library
-- **ES6 Module Support**: Full ESM compatibility with modern Node.js
+- **Singleton Connection Pool**: Single shared pool across all miniORM instances with automatic cleanup
+- **Flexible WHERE Conditions**: Support for multiple operators and type casting
+- **Logical Operators**: Chain conditions with AND/OR operators
+- **Auto Resource Management**: Pool automatically closes on process exit
+- **Debug Support**: Built-in debugging with configurable namespaces
+- **ES6 Module Support**: Full ESM compatibility
 
 ## Installation
 
 ```bash
-npm install
+npm install mysql2 debug @dotenvx/dotenvx express
 ```
 
 ## Environment Setup
@@ -38,59 +31,52 @@ DB_PORT=3306
 CONNECTION_LIMIT=10
 ```
 
-## Current Implementation Status
-
-### ✅ Implemented Features
-
-- Core ORM class with Builder inheritance
-- Connection pool management with auto-cleanup
-- Query building: `select()`, `selectAll()`, `and()`, `or()`
-- Immutable state management
-- Debug logging support
-- Automatic resource cleanup
-
-### ❌ Missing Features (Documented but not implemented)
-
-- `where()` method - referenced in tests but not implemented in Builder class
-- Graceful shutdown methods (`setupGracefulShutdown()`, `gracefulShutdown()`)
-- Multiple execution methods beyond `all()`
-
-## Usage
-
-### Basic Usage
+## Quick Start
 
 ```javascript
 import miniORM from './miniORM.js'
 
-// Create instance and set table
 const model = new miniORM()
 model.setTable('users')
 
-// Build and execute queries (Note: where() method not yet implemented)
-const users = await model
+// Select all users
+const allUsers = await model.selectAll().done()
+
+// Select specific columns with WHERE condition
+const activeUsers = await model
   .select('id', 'name', 'email')
+  .where('status', '=', 'active')
   .done()
-```
 
-### Connection Pool Management
-
-Connection pools are handled automatically with singleton pattern:
-
-```javascript
-// Multiple instances share the same connection pool
-const postsModel = new miniORM()
-const usersModel = new miniORM()
-
-postsModel.setTable('posts')
-usersModel.setTable('users')
-
-// Both instances use the same underlying connection pool
-// No manual connection management required
+// Complex conditions with AND/OR
+const adminUsers = await model
+  .select('id', 'name')
+  .where('status', '=', 'active')
+  .and()
+  .where('role', '=', 'admin')
+  .done()
 ```
 
 ## API Reference
 
 ### Core Methods
+
+#### `new miniORM(options?)`
+Create a new miniORM instance with optional database configuration.
+
+```javascript
+// Use environment variables
+const model = new miniORM()
+
+// Override with custom options
+const model = new miniORM({
+  host: 'custom-host',
+  user: 'custom-user',
+  password: 'custom-password',
+  database: 'custom-db',
+  connectionLimit: 20
+})
+```
 
 #### `setTable(tableName)`
 Set the table name for queries.
@@ -116,6 +102,10 @@ model.select('id', 'name', 'email')
 model.select('*') // Select all columns
 ```
 
+**Throws:**
+- Error if no columns provided
+- Error if columns contain empty, null, or undefined values
+
 #### `selectAll()`
 Select all columns (equivalent to `select('*')`). Takes no arguments.
 
@@ -123,126 +113,184 @@ Select all columns (equivalent to `select('*')`). Takes no arguments.
 model.selectAll()
 ```
 
+**Throws:**
+- Error if any arguments are provided
+
+#### `where(column, operator, value)`
+Add WHERE condition to the query.
+
+**Supported Operators:**
+- `=`, `!=`, `<>`, `>`, `>=`, `<`, `<=`, `LIKE`, `NOT LIKE`
+
+**Value Types:**
+- **Primitive values** (string, number, boolean):
+```javascript
+model.where('age', '>', 18)
+model.where('name', 'LIKE', '%john%')
+model.where('active', '=', true)
+```
+
+- **Object with type casting**:
+```javascript
+model.where('age', '>', { value: '25', type: 'number' })
+model.where('score', '=', { value: true, type: 'boolean' })
+model.where('name', '=', { value: 123, type: 'string' })
+```
+
+**Throws:**
+- Error if not exactly 3 arguments provided
+- Error if column is not a string or is empty
+- Error if operator is not supported
+- Error if value object is missing required keys
+- Error if value object contains invalid data
+
 #### `and()`
-Add AND operator between conditions. Returns new instance marked as operator.
+Add AND operator between conditions.
 
 ```javascript
 model
   .select('*')
-  // .where({ status: 'active' })  // Not yet implemented
+  .where('status', '=', 'active')
   .and()
-  // .where({ role: 'admin' })     // Not yet implemented
+  .where('role', '=', 'admin')
 ```
 
 #### `or()`
-Add OR operator between conditions. Returns new instance marked as operator.
+Add OR operator between conditions.
 
 ```javascript
 model
   .select('*')
-  // .where({ role: 'admin' })     // Not yet implemented
+  .where('role', '=', 'admin')
   .or()
-  // .where({ role: 'moderator' }) // Not yet implemented
+  .where('role', '=', 'moderator')
 ```
 
 ### Properties
 
-#### `state`
-Get current query state (read-only).
+#### `state` (read-only)
+Get current query state.
 
 ```javascript
-console.log(model.state) // { query: [...], values: [...] }
+console.log(model.state)
+// { query: ['SELECT * FROM users WHERE status = ?'], values: ['active'] }
 ```
 
-#### `table`
+#### `table` (read-only)
 Get current table name.
 
 ```javascript
 console.log(model.table) // 'users'
 ```
 
-#### `operatorSignal`
+#### `operatorSignal` (read-only)
 Check if current instance is an operator (AND/OR).
 
 ```javascript
 console.log(model.and().operatorSignal) // true
+console.log(model.select('id').operatorSignal) // false
 ```
 
 ## Examples
 
-### Basic Select Query
+### Basic Queries
 
 ```javascript
+import miniORM from './miniORM.js'
+
 const model = new miniORM()
 model.setTable('users')
 
-const allUsers = await model
-  .selectAll()
-  .done()
+// Select all users
+const allUsers = await model.selectAll().done()
 
-const specificColumns = await model
+// Select specific columns
+const userInfo = await model
   .select('id', 'name', 'created_at')
   .done()
-```
 
-### Query Building with Operators
-
-```javascript
-// Note: This example shows intended usage, but where() method is not implemented yet
-const model = new miniORM()
-model.setTable('users')
-
-// This would work once where() method is implemented:
-// const query = model
-//   .select('id', 'name')
-//   .where({ status: 'active' })
-//   .and()
-//   .where({ role: 'admin' })
-
-// Currently available:
-const query = model
+// Simple WHERE condition
+const activeUsers = await model
   .select('id', 'name')
-  .and() // Creates operator state
-  
-console.log(query.state) // Shows query structure
+  .where('status', '=', 'active')
+  .done()
 ```
 
-## Error Handling
-
-The ORM includes built-in validation:
-
-- Empty, null, or undefined column names are rejected in `select()`
-- `selectAll()` method validates that no arguments are passed
-- Queries ending with logical operators (AND/OR) throw errors on execution
-- Missing database configuration throws descriptive errors
+### Complex Conditions
 
 ```javascript
-try {
-  // This will throw - query ends with AND operator
-  const badQuery = model.select('id').and()
-  await badQuery.done()
-} catch (error) {
-  console.error('Query failed:', error.message)
-  // "SQL query can not end with a logical operator [AND]"
-}
+// AND condition
+const adminUsers = await model
+  .select('id', 'name', 'role')
+  .where('status', '=', 'active')
+  .and()
+  .where('role', '=', 'admin')
+  .done()
+
+// OR condition
+const privilegedUsers = await model
+  .select('id', 'name', 'role')
+  .where('role', '=', 'admin')
+  .or()
+  .where('role', '=', 'moderator')
+  .done()
+
+// Mixed conditions
+const complexQuery = await model
+  .select('*')
+  .where('status', '=', 'active')
+  .and()
+  .where('age', '>=', 18)
+  .and()
+  .where('country', '=', 'US')
+  .done()
 ```
 
-## Debug Mode
+### Type Casting
 
-Enable debug logging to monitor ORM operations:
+```javascript
+// Cast string to number
+const adults = await model
+  .select('*')
+  .where('age', '>', { value: '18', type: 'number' })
+  .done()
 
-```bash
-DEBUG=miniORM:* node your-app.js
+// Cast to boolean
+const verifiedUsers = await model
+  .select('*')
+  .where('verified', '=', { value: 'true', type: 'boolean' })
+  .done()
+
+// Cast number to string
+const userById = await model
+  .select('*')
+  .where('user_id', '=', { value: 123, type: 'string' })
+  .done()
 ```
 
-Available debug namespaces:
-- `miniORM:query` - SQL queries and parameters  
-- `miniORM:db` - Database connection events
-- `miniORM:options` - Configuration options
+### LIKE Patterns
 
-## Automatic Connection Management
+```javascript
+// Find users with names containing 'john'
+const johns = await model
+  .select('*')
+  .where('name', 'LIKE', '%john%')
+  .done()
 
-miniORM automatically handles database connections with zero configuration:
+// Find users with emails ending in '@gmail.com'
+const gmailUsers = await model
+  .select('*')
+  .where('email', 'LIKE', '%@gmail.com')
+  .done()
+
+// Find users NOT like pattern
+const nonGmailUsers = await model
+  .select('*')
+  .where('email', 'NOT LIKE', '%@gmail.com')
+  .done()
+```
+
+## Express Integration
 
 ```javascript
 import express from 'express'
@@ -251,157 +299,297 @@ import miniORM from './miniORM.js'
 const app = express()
 
 app.get('/users', async (req, res) => {
-  const model = new miniORM()
-  model.setTable('users')
-  
   try {
-    const users = await model.selectAll().done()
+    const model = new miniORM()
+    model.setTable('users')
+    
+    const users = await model
+      .select('id', 'name', 'email')
+      .where('status', '=', 'active')
+      .done()
+      
     res.json(users)
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
 })
 
+app.get('/posts/:author', async (req, res) => {
+  try {
+    const { author } = req.params
+    const model = new miniORM()
+    model.setTable('posts')
+    
+    const posts = await model
+      .select('post_id', 'post_title', 'post_body')
+      .where('post_author', '=', author)
+      .done()
+      
+    res.json(posts)
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
 app.listen(3000)
-// Connection pool automatically closes when process terminates
 ```
 
-### Automatic Lifecycle Management
+## Error Handling
 
-1. **Pool Creation**: First database query creates singleton connection pool
-2. **Pool Reuse**: All miniORM instances share the same pool via promise-based singleton
-3. **Cleanup Registration**: Process exit handlers registered automatically on first pool creation
-4. **Graceful Shutdown**: Pool closes on SIGINT, SIGTERM, or normal exit events
+### Query Validation Errors
+
+```javascript
+try {
+  // This will throw - empty column name
+  await model.select('', 'name').done()
+} catch (error) {
+  console.error(error.message)
+  // "List of columns can't include [empty, null or undefined] column(s) name(s)!"
+}
+
+try {
+  // This will throw - query ends with operator
+  await model.select('*').where('status', '=', 'active').and().done()
+} catch (error) {
+  console.error(error.message)
+  // "SQL query can not end with a logical operator [AND]"
+}
+```
+
+### WHERE Condition Errors
+
+```javascript
+try {
+  // This will throw - unsupported operator
+  await model.where('age', 'BETWEEN', 18).done()
+} catch (error) {
+  console.error(error.message)
+  // "Supported operators (=,!=,<>,>,>=,<,<=,LIKE,NOT LIKE)"
+}
+
+try {
+  // This will throw - invalid type casting
+  await model.where('age', '>', { value: 'abc', type: 'number' }).done()
+} catch (error) {
+  console.error(error.message)
+  // "Cannot cast 'abc' to number"
+}
+```
+
+## Debug Mode
+
+Enable debug logging to monitor ORM operations:
+
+```bash
+# Enable all miniORM debug output
+DEBUG=miniORM:* node your-app.js
+
+# Enable only query debugging
+DEBUG=miniORM:query node your-app.js
+
+# Enable only database connection debugging
+DEBUG=miniORM:db node your-app.js
+
+# Enable only configuration debugging
+DEBUG=miniORM:options node your-app.js
+```
+
+Debug output includes:
+- SQL queries and parameter values
+- Database connection events
+- Configuration options
+- Pool creation and cleanup
+
+## Connection Management
+
+miniORM uses a singleton connection pool that is automatically managed:
+
+### Automatic Features
+
+1. **Pool Creation**: First database query creates the connection pool
+2. **Pool Reuse**: All miniORM instances share the same pool
+3. **Auto Cleanup**: Pool closes automatically on process termination
+4. **Signal Handlers**: Registered for SIGINT, SIGTERM, and exit events
+
+### Configuration Priority
+
+1. Constructor options (highest priority)
+2. Environment variables
+3. Default values (lowest priority)
+
+```javascript
+// Environment variables take precedence
+process.env.DB_HOST = 'env-host'
+
+const model = new miniORM({
+  host: 'option-host'  // This will be used instead of env-host
+})
+```
+
+## Architecture
+
+### Class Hierarchy
+
+```
+Builder (Base Class)
+├── select()
+├── selectAll()
+├── where()
+├── and()
+├── or()
+└── clone()
+
+miniORM (Extended Class)
+├── constructor()
+├── setTable()
+├── done()
+├── state (getter)
+├── table (getter)
+└── operatorSignal (getter)
+```
+
+### Immutable Pattern
+
+Each method returns a new instance, preserving the original:
+
+```javascript
+const base = new miniORM()
+base.setTable('users')
+
+const query1 = base.select('id', 'name')       // New instance
+const query2 = query1.where('status', '=', 'active')  // New instance
+const query3 = query2.and()                    // New instance
+
+// Original base instance remains unchanged
+console.log(base.state) // { query: [], values: [] }
+console.log(query3.state) // { query: [...], values: [...] }
+```
+
+## Type Casting
+
+The Helper class provides automatic type conversion:
+
+### Supported Types
+
+- **string**: Converts any value to string using `toString()`
+- **number**: Converts to number, throws error if invalid
+- **boolean**: Converts to boolean using `Boolean()`
+- **default**: Returns value as-is
+
+### Usage Examples
+
+```javascript
+// These are equivalent:
+model.where('age', '>', 25)
+model.where('age', '>', { value: 25, type: 'number' })
+
+// Type casting in action:
+model.where('score', '=', { value: '95.5', type: 'number' }) // Converts '95.5' to 95.5
+model.where('active', '=', { value: 'yes', type: 'boolean' }) // Converts 'yes' to true
+model.where('user_id', '=', { value: 123, type: 'string' }) // Converts 123 to '123'
+```
 
 ## Project Structure
 
 ```
 miniORM/
-├── miniORM.js              # Main ORM class (extends Builder)
+├── miniORM.js              # Main ORM class
 ├── builder/
 │   └── Builder.js          # Query builder base class
 ├── execute/
 │   └── Execute.js          # Query execution with mysql2
 ├── db/
-│   └── db.js              # Connection pool singleton with auto-cleanup
+│   └── db.js              # Connection pool singleton
+├── helper/
+│   └── Helper.js          # Type casting utilities
 ├── examples/
-│   ├── auto-closing-demo.js    # Demonstrates auto-cleanup behavior
-│   └── test-auto-closing.js    # Test suite for auto-cleanup
-├── index.js               # Production example application
-├── auto-example.js        # Basic usage example
-└── usage-examples.js      # Advanced usage patterns (references unimplemented features)
+│   ├── auto-closing-demo.js    # Connection cleanup demo
+│   └── test-auto-closing.js    # Auto-cleanup tests
+├── auto-example.js        # Basic usage example with Express
+├── usage-examples.js      # Advanced patterns (contains unimplemented features)
+├── index.js               # Production example
+└── README.md              # This file
 ```
-
-## Implementation Details
-
-### Immutable Builder Pattern
-
-Each query method creates a new instance using the `clone()` method:
-
-```javascript
-// Each method returns a new miniORM instance
-const query1 = model.select('id', 'name')      // New instance
-const query2 = query1.and()                   // New instance  
-const query3 = query2.selectAll()             // New instance
-
-// Original model remains unchanged
-console.log(model.state)  // { query: [], values: [] }
-console.log(query3.state) // { query: [...], values: [...] }
-```
-
-### Singleton Connection Pool with Promise Lock
-
-The database module prevents race conditions using promise-based singleton:
-
-```javascript
-// Multiple concurrent instantiations share the same pool creation promise
-const [model1, model2] = await Promise.all([
-  new miniORM(),
-  new miniORM()
-])
-
-// Both use the same poolPromise, preventing duplicate connections
-```
-
-### Clone Method Implementation
-
-The `clone()` method preserves instance configuration while creating new state:
-
-```javascript
-clone(state, isOperator = this.#isOperator, executeMethod = this.#executeMethod) {
-  const instance = new this.constructor(this.#options, state, isOperator, executeMethod)
-  instance.setTable(this.#table)
-  instance.#execute = this.#execute
-  return instance
-}
-```
-
-## Running Examples
-
-### Auto-Cleanup Demonstration
-```bash
-node examples/auto-closing-demo.js
-```
-
-### Auto-Cleanup Test Suite  
-```bash
-node examples/test-auto-closing.js
-```
-
-### Basic Usage Example
-```bash
-node auto-example.js
-```
-
-### Production Example
-```bash
-node index.js
-```
-
-Note: Some examples reference unimplemented features and may not work as shown.
-
-## Configuration
-
-### Environment Variables
-```env
-DB_HOST=localhost
-DB_USER=root  
-DB_PASSWORD=your_password
-DB_NAME=your_database
-DB_PORT=3306
-CONNECTION_LIMIT=10
-```
-
-### Constructor Options
-```javascript
-const model = new miniORM({
-  host: 'custom-host',
-  user: 'custom-user', 
-  password: 'custom-password',
-  database: 'custom-db',
-  connectionLimit: 20
-})
-```
-
-Environment variables take precedence over constructor options.
-
-## Development Status
-
-This is an active development project. The core architecture is implemented, but several features referenced in examples and tests are not yet complete:
-
-### Next Steps
-1. Implement `where()` method in Builder class
-2. Add support for complex WHERE conditions
-3. Implement additional execution methods
-4. Add graceful shutdown functionality shown in usage-examples
-5. Add comprehensive error handling
-6. Add transaction support
 
 ## Dependencies
 
 - **mysql2**: MySQL client with promise support
-- **debug**: Debug logging utility  
+- **debug**: Debug logging utility
 - **@dotenvx/dotenvx**: Environment variable management
+- **express**: Web framework (for examples)
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DB_HOST` | `localhost` | Database host |
+| `DB_USER` | `root` | Database username |
+| `DB_PASSWORD` | `(required)` | Database password |
+| `DB_NAME` | `(required)` | Database name |
+| `DB_PORT` | `3306` | Database port |
+| `CONNECTION_LIMIT` | `10` | Max pool connections |
+
+## Common Patterns
+
+### Multiple Tables
+
+```javascript
+const usersModel = new miniORM()
+usersModel.setTable('users')
+
+const postsModel = new miniORM()
+postsModel.setTable('posts')
+
+// Both share the same connection pool
+const users = await usersModel.selectAll().done()
+const posts = await postsModel.selectAll().done()
+```
+
+### Reusable Queries
+
+```javascript
+const activeUsersBase = new miniORM()
+activeUsersBase.setTable('users')
+
+// Create reusable base query
+const activeQuery = activeUsersBase
+  .select('id', 'name', 'email')
+  .where('status', '=', 'active')
+
+// Extend with different conditions
+const adminUsers = await activeQuery
+  .and()
+  .where('role', '=', 'admin')
+  .done()
+
+const moderatorUsers = await activeQuery
+  .and()
+  .where('role', '=', 'moderator')
+  .done()
+```
+
+### Dynamic Conditions
+
+```javascript
+async function getUsers(filters) {
+  let query = new miniORM()
+  query.setTable('users')
+  query = query.selectAll()
+  
+  if (filters.status) {
+    query = query.where('status', '=', filters.status)
+  }
+  
+  if (filters.minAge) {
+    if (filters.status) query = query.and()
+    query = query.where('age', '>=', filters.minAge)
+  }
+  
+  return await query.done()
+}
+
+const results = await getUsers({ status: 'active', minAge: 18 })
+```
 
 ## License
 
