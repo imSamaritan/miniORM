@@ -25,7 +25,7 @@ const usersModel = new miniORM()
 const categoriesModel = new miniORM()
 
 postsModel.setTable('posts')
-usersModel.setTable('users')
+usersModel.setTable('posts')
 categoriesModel.setTable('categories')
 
 console.log(
@@ -40,18 +40,23 @@ const app = express()
 app.get('/', async (req, res) => {
   try {
     const results = await postsModel
-      .selectAll()
-      .where('post_id', 'not like', 2)
-      .orWhere('post_author', '<>', 'imsamaritan')
-      .or()
-      .where('post_id', 'not like', 2)
+      .select('*')
+      .where('post_id', '=', 1)
+      .orGroup((instance) => {
+        return instance
+          .where('post_author', '=', 'imsamaritan')
+      })
+      .orGroup((instance) => {
+        return instance
+          .where('post_author', '=', 'John doe')
+      })
       .done()
     console.log(postsModel.state)
     return res.send(results)
   } catch (error) {
     console.log(error)
     res.status(400).send({ error: error.message })
-  }
+  } 
 })
 
 const server = app.listen(PORT, () => {
