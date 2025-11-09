@@ -37,10 +37,18 @@ class Builder {
   @param {boolean|number|string|object} value 
   @return {Builder}*/
   where(column, operator, value) {
+    let stateValue;
     let state = { query: [], values: [] }
     const argumentsCount = arguments.length
     const { query, values } = this.state
     const supportedOperators = ['=','!=','<>','>','>=','<','<=','LIKE','NOT LIKE']
+    const notSupportedOperators = ['IS NULL', 'IS NOT NULL', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN']
+    
+    const whereMethodUsed = query[query.length - 1].includes('WHERE') 
+    
+    if (whereMethodUsed) {
+      throw new Error('"Where" method can not be chain after another one, consider using the following methods after where (or(), and(), orWhere(), andWhere(), orGroup(cb), andGroup(cb)')
+    }
     
     operator = operator.toUpperCase()
 
@@ -58,21 +66,13 @@ class Builder {
     if (columnIsNotStringOrEmpty)
       throw new Error('Column should be string type and not be empty')
     
+    if (notSupportedOperators.includes(operator)) 
+      throw new Error(`For the current used operator ${operator}, consider using corresponding method operator (whereIsNotNull(), whereIsNull(), whereIn(), whereNotIn(), whereBetween() and whereNotBetween()`)
+  
     if (operatorNotSupportedOrEmpty)
       throw new Error(`Supported operators (${supportedOperators.join(',')})`)
-
-    if (valueIsStringAndNotEmpty || valueIsBoolean || valueIsANumber) {
-      if (this.operatorSignal)
-        state = {
-          query: [...query, `${column} ${operator} ?`],
-          values: [...values, value],
-        }
-      else
-        state = {
-          query: [...query, `WHERE ${column} ${operator} ?`],
-          values: [value],
-        }
-    }
+    
+    if (valueIsStringAndNotEmpty || valueIsBoolean || valueIsANumber) stateValue = value
 
     if (valueIsAnObject) {
       const valueKeys = Object.keys(value)
@@ -96,20 +96,19 @@ class Builder {
         throw new Error('Type key is required and must contain a string type as value')
       
       const _type = value['type']
-      const _value = Helper.castValue(value['value'], _type)
-
-      if (this.operatorSignal) 
-        state = {
-          query: [...query, `${column} ${operator} ?`],
-          values: [...values, _value],
-        }
-       else 
-        state = {
-          query: [...query, `WHERE ${column} ${operator} ?`],
-          values: [_value],
-        }
-      
+      stateValue = Helper.castValue(value['value'], _type)
     }
+    
+    if (this.operatorSignal) 
+      state = {
+        query: [...query, `${column} ${operator} ?`],
+        values: [...values, stateValue],
+      }
+     else 
+      state = {
+        query: [...query, `WHERE ${column} ${operator} ?`],
+        values: [stateValue],
+      }
 
     return this.clone(state)
   }
@@ -122,8 +121,8 @@ class Builder {
   orWhere(column, operator, value) {
     const {query, values} = this.state
     const queryLastPart = query[query.length - 1]
-    const whereMethodNotUsed = ! query.join('').includes('WHERE')
-  
+    let whereMethodNotUsed = ! query.join('').includes('WHERE')
+    
     if (queryLastPart === 'AND' || queryLastPart === 'OR') {
       throw new Error('"orWhere" method can not be called after and()/or() method operator!')
     }

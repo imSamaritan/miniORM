@@ -41,9 +41,12 @@ app.get('/', async (req, res) => {
   try {
     const results = await postsModel
       .selectAll()
-      .where('post_id', '>', 2)
-      .orWhere('post_id', '<>', {value: 1, type: 'string'})
+      .where('post_id', 'not like', 2)
+      .orWhere('post_author', '<>', 'imsamaritan')
+      .or()
+      .where('post_id', 'not like', 2)
       .done()
+    console.log(postsModel.state)
     return res.send(results)
   } catch (error) {
     console.log(error)
