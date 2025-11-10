@@ -9,7 +9,7 @@ class Builder {
    * @param {string} method
    * @return {Builder}
    */
-  #and_or(column, operator, value, logicOperaor, method) {
+  #andOr(column, operator, value, logicOperaor, method) {
     const { query, values } = this.state
     const queryLastPart = query[query.length - 1]
     let whereMethodNotUsed = !query.join('').includes('WHERE')
@@ -46,6 +46,33 @@ class Builder {
       values: [...values],
     })
     return callback(builder)
+  }
+
+  /**@param {string} column @param {Array} list @param {'NOT IN'|'IN'} operator @return {Builder} */
+  #inOrNotIn(column, list, operator) {
+    let state = { query: [], values: [] }
+    const { query, values } = this.state
+
+    if (typeof column != 'string' || column === '')
+      throw new Error('Column should be string and not empty!')
+    
+    if (!Array.isArray(list) || list.length < 1)
+      throw new Error('List should be an array type and not empty!')
+    
+    const placeholders = list.map((value) => '?').join(',')
+    
+    if (this.operatorSignal)
+      state = {
+        query: [...query, `${column} ${operator}(${placeholders})`],
+        values: [...values, ...list],
+      }
+    else
+      state = {
+        query: [...query, `WHERE ${column} ${operator}(${placeholders})`],
+        values: [...values, ...list],
+      }
+
+    return this.clone(state, true)
   }
 
   /** @param {string[]} columns @return {Builder} */
@@ -197,14 +224,14 @@ class Builder {
     const { query, values } = this.state
     return this.clone({ query: [...query, 'OR'], values: [...values] }, true)
   }
-  
+
   /**
   @param {string} column
   @param {string} operator
   @param {boolean|number|string|object} value
   @return {Builder}*/
   orWhere(column, operator, value) {
-    return this.#and_or(column, operator, value, 'OR', 'orWhere')
+    return this.#andOr(column, operator, value, 'OR', 'orWhere')
   }
 
   /**
@@ -220,7 +247,7 @@ class Builder {
     const { query, values } = this.state
     return this.clone({ query: [...query, 'AND'], values: [...values] }, true)
   }
-  
+
   /**
   @param {string} column
   @param {string} operator
@@ -228,15 +255,25 @@ class Builder {
   @return {Builder}
   */
   andWhere(column, operator, value) {
-    return this.#and_or(column, operator, value, 'AND', 'andWhere')
+    return this.#andOr(column, operator, value, 'AND', 'andWhere')
   }
-  
+
   /**
    * @param {Closure} callback
    * @returns {Builder}
    */
   andGroup(callback) {
     return this.#group(callback, 'AND')
+  }
+
+  /**@param {string} column @param {Array} list @returns {Builder} */
+  whereIn(column, list) {
+    return this.#inOrNotIn(column, list, 'IN')
+  }
+
+  /**@param {string} column @param {Array} list @returns {Builder} */
+  whereNotIn(column, list) {
+    return this.#inOrNotIn(column, list, 'NOT IN')
   }
 }
 

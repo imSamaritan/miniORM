@@ -6,7 +6,7 @@ A lightweight Object-Relational Mapping (ORM) library for Node.js with MySQL sup
 
 - **Immutable Builder Pattern**: Each query method returns a new instance, preserving immutability
 - **Singleton Connection Pool**: Single shared pool across all miniORM instances with automatic cleanup
-- **Flexible WHERE Conditions**: Support for multiple operators and type casting
+- **Flexible WHERE Conditions**: Support for multiple operators including IN/NOT IN and type casting
 - **Logical Operators**: Chain conditions with AND/OR operators, orWhere, andWhere methods, and grouping with andGroup/orGroup
 - **Auto Resource Management**: Pool automatically closes on process exit
 - **Debug Support**: Built-in debugging with configurable namespaces
@@ -80,6 +80,18 @@ const complexUsers = await model
       .orWhere('role', '=', 'moderator')
   })
   .done()
+
+// Using whereIn for multiple values
+const privilegedUsersIn = await model
+  .select('id', 'name', 'role')
+  .whereIn('role', ['admin', 'moderator', 'supervisor'])
+  .done()
+
+// Using whereNotIn to exclude values
+const activeUsersNotIn = await model
+  .select('id', 'name', 'email')
+  .whereNotIn('status', ['inactive', 'banned', 'deleted'])
+  .done()
 ```
 
 ## API Reference
@@ -147,6 +159,8 @@ Add WHERE condition to the query.
 **Supported Operators:**
 - `=`, `!=`, `<>`, `>`, `>=`, `<`, `<=`, `LIKE`, `NOT LIKE`
 
+**Note:** For `IN` and `NOT IN` operations, use the dedicated methods `whereIn()` and `whereNotIn()` instead.
+
 **Value Types:**
 - **Primitive values** (string, number, boolean):
 ```javascript
@@ -166,6 +180,7 @@ model.where('name', '=', { value: 123, type: 'string' })
 - Error if not exactly 3 arguments: "Where method takes 3 arguments (column,operator,value)!"
 - Error if column is not a string or is empty: "Column should be string type and not be empty"
 - Error if operator is not supported: "Supported operators (=,!=,<>,>,>=,<,<=,LIKE,NOT LIKE)"
+- Error if trying to use IN/NOT IN operators: "For the current used operator IN, consider using corresponding method operator (whereIsNotNull(), whereIsNull(), whereIn(), whereNotIn(), whereBetween() and whereNotBetween()"
 - Error if value object is missing required keys: "Value key is required and must carry a valid value!" or "Type key is required and must contain a string type as value"
 - Error if value object contains invalid data: "Value can not be (null, undefined, {}, []) or empty!"
 
@@ -196,6 +211,36 @@ model
 **Throws:**
 - Error if called after and()/or(): "andWhere method can not be called after and()/or() method operator!"
 - Error if called before where(): "andWhere method must be chained after the where method!"
+
+#### `whereIn(column, list)`
+Add WHERE IN condition to check if column value exists in the provided list.
+
+```javascript
+model
+  .select('*')
+  .whereIn('role', ['admin', 'moderator', 'manager'])
+```
+
+This generates: `WHERE role IN (?, ?, ?)`
+
+**Throws:**
+- Error if column is not a string or is empty: "Column should be string and not empty!"
+- Error if list is not an array or is empty: "List should be an array type and not empty!"
+
+#### `whereNotIn(column, list)`
+Add WHERE NOT IN condition to check if column value does not exist in the provided list.
+
+```javascript
+model
+  .select('*')
+  .whereNotIn('status', ['inactive', 'banned', 'deleted'])
+```
+
+This generates: `WHERE status NOT IN (?, ?, ?)`
+
+**Throws:**
+- Error if column is not a string or is empty: "Column should be string and not empty!"
+- Error if list is not an array or is empty: "List should be an array type and not empty!"
 
 #### `orGroup(callback)`
 Group WHERE conditions with OR logic. Takes a callback function that receives a builder instance.
@@ -299,6 +344,12 @@ const activeUsers = await model
   .select('id', 'name')
   .where('status', '=', 'active')
   .done()
+
+// WHERE IN condition
+const privilegedUsers = await model
+  .select('id', 'name', 'role')
+  .whereIn('role', ['admin', 'moderator', 'manager'])
+  .done()
 ```
 
 ### Complex Conditions
@@ -341,6 +392,45 @@ const complexQuery = await model
   .and()
   .where('age', '>=', 18)
   .orWhere('verified', '=', true)
+  .done()
+```
+
+### WHERE IN/NOT IN Queries
+
+```javascript
+// Select users with specific roles
+const privilegedUsers = await model
+  .select('*')
+  .whereIn('role', ['admin', 'moderator', 'supervisor'])
+  .done()
+
+// Select users excluding certain statuses
+const activeUsers = await model
+  .select('*')
+  .whereNotIn('status', ['inactive', 'banned', 'deleted'])
+  .done()
+
+// Combine IN with other conditions
+const specificUsers = await model
+  .select('*')
+  .where('department', '=', 'engineering')
+  .andWhere('status', '=', 'active')
+  .orWhere('user_id', 'IN', [1, 5, 10])
+  .done()
+
+// Using IN with grouped conditions
+const complexQuery = await model
+  .select('*')
+  .where('company', '=', 'TechCorp')
+  .andGroup((builder) => {
+    return builder
+      .whereIn('role', ['admin', 'manager'])
+      .orGroup((nestedBuilder) => {
+        return nestedBuilder
+          .whereNotIn('department', ['hr', 'finance'])
+          .andWhere('level', '>=', 'senior')
+      })
+  })
   .done()
 ```
 
@@ -520,6 +610,22 @@ try {
   console.error(error.message)
   // "andWhere method must be chained after the where method!"
 }
+
+try {
+  // This will throw - empty list for whereIn
+  await model.select('*').whereIn('role', []).done()
+} catch (error) {
+  console.error(error.message)
+  // "List should be an array type and not empty!"
+}
+
+try {
+  // This will throw - invalid column for whereNotIn
+  await model.select('*').whereNotIn('', ['admin', 'user']).done()
+} catch (error) {
+  console.error(error.message)
+  // "Column should be string and not empty!"
+}
 ```
 
 ### WHERE Condition Errors
@@ -603,6 +709,8 @@ Builder (Base Class)
 ├── where()
 ├── orWhere()
 ├── andWhere()
+├── whereIn()
+├── whereNotIn()
 ├── and()
 ├── or()
 ├── orGroup()
