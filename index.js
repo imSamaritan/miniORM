@@ -40,23 +40,16 @@ const app = express()
 app.get('/', async (req, res) => {
   try {
     const results = await postsModel
-      .select('*')
-      .where('post_id', '=', 1)
-      .orGroup((instance) => {
-        return instance
-          .where('post_author', '=', 'imsamaritan')
-      })
-      .orGroup((instance) => {
-        return instance
-          .where('post_author', '=', 'John doe')
-      })
+      .selectAll()
+      .whereIn('post_id', [1, 2])
+      .orGroup((builder) => builder.whereNotIn('post_author', ['imsamaritan']))
       .done()
     console.log(postsModel.state)
     return res.send(results)
   } catch (error) {
     console.log(error)
     res.status(400).send({ error: error.message })
-  } 
+  }
 })
 
 const server = app.listen(PORT, () => {
