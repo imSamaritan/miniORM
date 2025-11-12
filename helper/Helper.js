@@ -1,4 +1,6 @@
-class Helper {
+export const _cloneMethodSymbol = Symbol()
+
+export default class Helper {
   static castValue(value, type) {
     let castedValue
 
@@ -22,4 +24,3 @@ class Helper {
   }
 }
 
-export default Helper

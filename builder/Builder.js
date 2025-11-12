@@ -1,4 +1,4 @@
-import Helper from '../helper/Helper.js'
+import Helper, { _cloneMethodSymbol as _clone } from '../helper/Helper.js'
 
 class Builder {
   /**
@@ -27,7 +27,7 @@ class Builder {
     }
 
     const state = { query: [...query, logicOperaor], values: [...values] }
-    const orWhereInstance = this.clone(state, true)
+    const orWhereInstance = this[_clone](state, true)
 
     const builder = orWhereInstance.where(column, operator, value)
     return builder
@@ -41,7 +41,7 @@ class Builder {
   #group(callback, logicOperaor) {
     const { query, values } = this.state
 
-    const builder = this.clone({
+    const builder = this[_clone]({
       query: [...query, logicOperaor],
       values: [...values],
     })
@@ -55,12 +55,12 @@ class Builder {
 
     if (typeof column != 'string' || column === '')
       throw new Error('Column should be string and not empty!')
-    
+
     if (!Array.isArray(list) || list.length < 1)
       throw new Error('List should be an array type and not empty!')
-    
+
     const placeholders = list.map((value) => '?').join(',')
-    
+
     if (this.operatorSignal)
       state = {
         query: [...query, `${column} ${operator}(${placeholders})`],
@@ -72,7 +72,7 @@ class Builder {
         values: [...values, ...list],
       }
 
-    return this.clone(state, true)
+    return this[_clone](state, true)
   }
 
   /** @param {string[]} columns @return {Builder} */
@@ -88,7 +88,7 @@ class Builder {
         "List of columns can't include [empty, null or undefined] column(s) name(s)!",
       )
 
-    return this.clone(
+    return this[_clone](
       {
         query: [`SELECT ${columns.join(', ')} FROM ${this.table}`],
         values: [],
@@ -216,13 +216,13 @@ class Builder {
         values: [stateValue],
       }
 
-    return this.clone(state, true)
+    return this[_clone](state, true)
   }
 
   /** @return {Builder}*/
   or() {
     const { query, values } = this.state
-    return this.clone({ query: [...query, 'OR'], values: [...values] }, true)
+    return this[_clone]({ query: [...query, 'OR'], values: [...values] }, true)
   }
 
   /**
@@ -245,7 +245,7 @@ class Builder {
   /** @return {Builder}*/
   and() {
     const { query, values } = this.state
-    return this.clone({ query: [...query, 'AND'], values: [...values] }, true)
+    return this[_clone]({ query: [...query, 'AND'], values: [...values] }, true)
   }
 
   /**
