@@ -41,10 +41,12 @@ app.get('/', async (req, res) => {
   try {
     const results = await postsModel
       .selectAll()
-      .whereIn('post_id', [1, 2])
-      .orGroup((builder) => builder.whereNotIn('post_author', ['imsamaritan']))
+      .where('post_id', '=', 2)
+      .orGroup((builder) => {
+        return builder
+          .where('post_author', '!=', 'imsamaritan')
+      })
       .done()
-    console.log(postsModel.state)
     return res.send(results)
   } catch (error) {
     console.log(error)

@@ -2,6 +2,7 @@ import mysql from 'mysql2/promise'
 import debug from 'debug'
 import Execute from './execute/Execute.js'
 import Builder from './builder/Builder.js'
+import { _cloneMethodSymbol as _clone } from './helper/Helper.js'
 
 const queryDebugger = debug('miniORM:query')
 
@@ -48,7 +49,7 @@ class miniORM extends Builder {
    *
    * @return {miniORM}
    */
-  clone(
+  [_clone](
     state,
     isOperator = this.#isOperator,
     executeMethod = this.#executeMethod,
