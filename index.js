@@ -41,11 +41,8 @@ app.get('/', async (req, res) => {
   try {
     const results = await postsModel
       .selectAll()
-      .where('post_id', '=', 2)
-      .orGroup((builder) => {
-        return builder
-          .where('post_author', '!=', 'imsamaritan')
-      })
+      .whereIsNull('post_likes')
+      .orGroup((builder) => builder.whereIsNotNull('post_author'))
       .done()
     return res.send(results)
   } catch (error) {

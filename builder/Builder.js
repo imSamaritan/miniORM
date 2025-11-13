@@ -41,10 +41,7 @@ class Builder {
   #group(callback, logicOperaor) {
     const { query, values } = this.state
 
-    const builder = this[_clone]({
-      query: [...query, logicOperaor],
-      values: [...values],
-    })
+    const builder = this[_clone]({ query: [...query, logicOperaor], values: [...values]}, true)
     return callback(builder)
   }
 
@@ -73,6 +70,34 @@ class Builder {
       }
 
     return this[_clone](state, true)
+  }
+
+  /** @param {string} column @param {string} operator @returns {Builder} */
+  #nullOrNotNull(column, operator) {
+    let state = { query: [], values: [] }
+    const { query, values } = this.state
+    const queryLastPart = query[query.length - 1]
+
+    if (queryLastPart.includes('WHERE'))
+      throw new Error(
+        `where() and whereIsNull() methods must be chained through and() or or() or use grouping methods!`,
+      )
+
+    if (typeof column != 'string' || column === '')
+      throw new Error('Column should be a string and not empty!')
+
+    if (this.operatorSignal)
+      state = {
+        query: [...query, `${column} ${operator}`],
+        values: [...values],
+      }
+    else
+      state = {
+        query: [...query, `WHERE ${column} ${operator}`],
+        values: [...values],
+      }
+
+    return this[_clone](state)
   }
 
   /** @param {string[]} columns @return {Builder} */
@@ -274,6 +299,24 @@ class Builder {
   /**@param {string} column @param {Array} list @returns {Builder} */
   whereNotIn(column, list) {
     return this.#inOrNotIn(column, list, 'NOT IN')
+  }
+
+  /** @param {string} column @returns {Builder} */
+  whereIsNull(column) {
+    if (arguments.length < 1 || arguments.length > 1)
+      throw new Error(
+        '"Column name" argument is the only one that is required!',
+      )
+    return this.#nullOrNotNull(column, 'IS NULL')
+  }
+
+  /** @param {string} column @returns {Builder} */
+  whereIsNotNull(column) {
+    if (arguments.length < 1 || arguments.length > 1)
+      throw new Error(
+        '"Column name" argument is the only one that is required!',
+      )
+    return this.#nullOrNotNull(column, 'IS NOT NULL')
   }
 }
 
