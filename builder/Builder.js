@@ -41,7 +41,10 @@ class Builder {
   #group(callback, logicOperaor) {
     const { query, values } = this.state
 
-    const builder = this[_clone]({ query: [...query, logicOperaor], values: [...values]}, true)
+    const builder = this[_clone](
+      { query: [...query, logicOperaor], values: [...values] },
+      true,
+    )
     return callback(builder)
   }
 
@@ -188,7 +191,7 @@ class Builder {
 
     if (notSupportedOperators.includes(operator))
       throw new Error(
-        `For the current used operator ${operator}, consider using corresponding method operator (whereIsNotNull(), whereIsNull(), whereIn(), whereNotIn(), whereBetween() and whereNotBetween()`,
+        `For the current used operator ${operator}, consider using corresponding method operator (whereIsNotNull(), whereIsNull(), whereIn(), whereNotIn())`,
       )
 
     if (operatorNotSupportedOrEmpty)
