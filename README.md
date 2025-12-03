@@ -92,6 +92,18 @@ const activeUsersNotIn = await model
   .select('id', 'name', 'email')
   .whereNotIn('status', ['inactive', 'banned', 'deleted'])
   .done()
+
+// Check for NULL values
+const deletedUsers = await model
+  .select('id', 'name')
+  .whereIsNull('deleted_at')
+  .done()
+
+// Check for non-NULL values
+const verifiedUsers = await model
+  .select('id', 'email')
+  .whereIsNotNull('email_verified_at')
+  .done()
 ```
 
 ## API Reference
@@ -180,7 +192,7 @@ model.where('name', '=', { value: 123, type: 'string' })
 - Error if not exactly 3 arguments: "Where method takes 3 arguments (column,operator,value)!"
 - Error if column is not a string or is empty: "Column should be string type and not be empty"
 - Error if operator is not supported: "Supported operators (=,!=,<>,>,>=,<,<=,LIKE,NOT LIKE)"
-- Error if trying to use IN/NOT IN operators: "For the current used operator IN, consider using corresponding method operator (whereIsNotNull(), whereIsNull(), whereIn(), whereNotIn(), whereBetween() and whereNotBetween()"
+- Error if trying to use IN/NOT IN/NULL operators: "For the current used operator IN, consider using corresponding method operator (whereIsNotNull(), whereIsNull(), whereIn(), whereNotIn())"
 - Error if value object is missing required keys: "Value key is required and must carry a valid value!" or "Type key is required and must contain a string type as value"
 - Error if value object contains invalid data: "Value can not be (null, undefined, {}, []) or empty!"
 
@@ -241,6 +253,46 @@ This generates: `WHERE status NOT IN (?, ?, ?)`
 **Throws:**
 - Error if column is not a string or is empty: "Column should be string and not empty!"
 - Error if list is not an array or is empty: "List should be an array type and not empty!"
+
+#### `whereIsNull(column)`
+Add WHERE IS NULL condition to check if column value is NULL.
+
+```javascript
+model
+  .select('*')
+  .whereIsNull('deleted_at')
+```
+
+This generates: `WHERE deleted_at IS NULL`
+
+**Chaining:**
+- Can be used as the first WHERE condition
+- When chaining after another WHERE condition, must use `and()`, `or()`, `andWhere()`, `orWhere()`, or grouping methods (`andGroup()`, `orGroup()`)
+
+**Throws:**
+- Error if not exactly 1 argument: "'Column name' argument is the only one that is required!"
+- Error if column is not a string or is empty: "Column should be a string and not empty!"
+- Error if chained directly after `where()`: "where() and whereIsNull() methods must be chained through and() or or() or use grouping methods!"
+
+#### `whereIsNotNull(column)`
+Add WHERE IS NOT NULL condition to check if column value is not NULL.
+
+```javascript
+model
+  .select('*')
+  .whereIsNotNull('email')
+```
+
+This generates: `WHERE email IS NOT NULL`
+
+**Chaining:**
+- Can be used as the first WHERE condition
+- When chaining after another WHERE condition, must use `and()`, `or()`, `andWhere()`, `orWhere()`, or grouping methods (`andGroup()`, `orGroup()`)
+
+**Throws:**
+- Error if not exactly 1 argument: "'Column name' argument is the only one that is required!"
+- Error if column is not a string or is empty: "Column should be a string and not empty!"
+- Error if chained directly after `where()`: "where() and whereIsNull() methods must be chained through and() or or() or use grouping methods!"
 
 #### `orGroup(callback)`
 Group WHERE conditions with OR logic. Takes a callback function that receives a builder instance.
@@ -430,6 +482,54 @@ const complexQuery = await model
           .whereNotIn('department', ['hr', 'finance'])
           .andWhere('level', '>=', 'senior')
       })
+  })
+  .done()
+```
+
+### NULL Checking Queries
+
+```javascript
+// Find users with no deletion timestamp (active users)
+const activeUsers = await model
+  .select('*')
+  .whereIsNull('deleted_at')
+  .done()
+
+// Find users with verified email addresses
+const verifiedUsers = await model
+  .select('*')
+  .whereIsNotNull('email_verified_at')
+  .done()
+
+// Combine NULL checks with other conditions using and()
+const incompleteProfiles = await model
+  .select('id', 'name', 'email')
+  .where('status', '=', 'active')
+  .and()
+  .whereIsNull('phone')
+  .done()
+
+// Using andWhere for chaining
+const activeIncomplete = await model
+  .select('id', 'name', 'email')
+  .where('status', '=', 'active')
+  .andWhere('profile_completed', '=', false)
+  .orGroup((builder) => {
+    return builder
+      .whereIsNull('phone')
+      .or()
+      .whereIsNull('address')
+  })
+  .done()
+
+// Complex NULL checking with grouping
+const needsAttention = await model
+  .select('*')
+  .whereIsNotNull('created_at')
+  .andGroup((builder) => {
+    return builder
+      .whereIsNull('last_login')
+      .orWhere('status', '=', 'pending')
   })
   .done()
 ```
@@ -711,6 +811,8 @@ Builder (Base Class)
 ├── andWhere()
 ├── whereIn()
 ├── whereNotIn()
+├── whereIsNull()
+├── whereIsNotNull()
 ├── and()
 ├── or()
 ├── orGroup()
