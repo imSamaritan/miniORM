@@ -26,7 +26,7 @@ class ExampleApp {
 
         const results = await model
           .select('post_id', 'post_title', 'post_body')
-          .where({ post_author: 'imsamaritan' })
+          .where('post_author', '=', 'imsamaritan')
           .done()
 
         res.json(results)
@@ -62,17 +62,10 @@ class ExampleApp {
         })
       }
 
-      try {
-        // User calls the library's cleanup method
-        await miniORM.closeConnection()
-        appDebug('Database connections closed')
-
-        appDebug('Graceful shutdown completed')
-        process.exit(0)
-      } catch (error) {
-        appDebug(`Error during shutdown: ${error.message}`)
-        process.exit(1)
-      }
+      // Connection pool closes automatically on process exit
+      appDebug('Database connections will close automatically')
+      appDebug('Graceful shutdown completed')
+      process.exit(0)
     }
 
     // User controls when and how to handle signals
@@ -81,23 +74,15 @@ class ExampleApp {
     process.on('SIGUSR2', () => shutdown('SIGUSR2')) // Nodemon restart
 
     // Optional: Handle uncaught exceptions
-    process.on('uncaughtException', async (error) => {
+    process.on('uncaughtException', (error) => {
       appDebug('Uncaught Exception:', error)
-      try {
-        await miniORM.closeConnection()
-      } catch (closeError) {
-        appDebug('Error closing connections during exception:', closeError)
-      }
+      // Connection pool closes automatically on process exit
       process.exit(1)
     })
 
-    process.on('unhandledRejection', async (reason, promise) => {
+    process.on('unhandledRejection', (reason, promise) => {
       appDebug('Unhandled Rejection at:', promise, 'reason:', reason)
-      try {
-        await miniORM.closeConnection()
-      } catch (closeError) {
-        appDebug('Error closing connections during rejection:', closeError)
-      }
+      // Connection pool closes automatically on process exit
       process.exit(1)
     })
   }
@@ -111,7 +96,9 @@ class ExampleApp {
       appDebug('  GET /all-posts - Get all posts')
       appDebug('')
       appDebug('To test graceful shutdown: Press Ctrl+C')
-      appDebug('To see debug output: DEBUG=example:*,miniORM:* node example-app.js')
+      appDebug(
+        'To see debug output: DEBUG=example:*,miniORM:* node example-app.js',
+      )
     })
   }
 }

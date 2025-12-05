@@ -17,7 +17,7 @@ app.get('/', async (req, res) => {
 
     const results = await model
       .select('post_id', 'post_title', 'post_body')
-      .where({ post_author: 'imsamaritan' })
+      .where('post_author', '=', 'imsamaritan')
       .done()
 
     res.json(results)
@@ -45,7 +45,7 @@ app.get('/users', async (req, res) => {
 
     const results = await model
       .select('id', 'name', 'email')
-      .where({ status: 'active' })
+      .where('status', '=', 'active')
       .done()
 
     res.json(results)
@@ -62,6 +62,8 @@ app.listen(PORT, () => {
   console.log('  GET /all-posts - All posts')
   console.log('  GET /users - Active users')
   console.log('')
-  console.log('✨ Auto shutdown enabled - just press Ctrl+C to gracefully stop!')
+  console.log(
+    '✨ Auto shutdown enabled - just press Ctrl+C to gracefully stop!',
+  )
   console.log('🐛 Debug: DEBUG=miniORM:* node auto-example.js')
 })

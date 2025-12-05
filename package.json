@@ -1,14 +1,25 @@
 {
   "name": "miniorm",
   "version": "1.0.0",
-  "description": "",
+  "description": "A lightweight Object-Relational Mapping (ORM) library for Node.js with MySQL support and automatic connection pool management",
   "main": "index.js",
   "scripts": {
     "dev": "clear && nodemon index",
+    "test": "node simple-examples.js",
+    "test:debug": "DEBUG=examples:*,miniORM:* node simple-examples.js",
+    "example": "node auto-example.js",
     "query": "set DEBUG=miniORM:query",
     "reset": "set DEBUG="
   },
-  "keywords": [],
+  "keywords": [
+    "orm",
+    "mysql",
+    "database",
+    "query-builder",
+    "nodejs",
+    "mysql2",
+    "connection-pool"
+  ],
   "author": "",
   "license": "ISC",
   "type": "module",

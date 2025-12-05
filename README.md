@@ -11,11 +11,12 @@ A lightweight Object-Relational Mapping (ORM) library for Node.js with MySQL sup
 - **Auto Resource Management**: Pool automatically closes on process exit
 - **Debug Support**: Built-in debugging with configurable namespaces
 - **ES6 Module Support**: Full ESM compatibility
+- **UPDATE Operations**: Support for UPDATE queries with WHERE conditions
 
 ## Installation
 
 ```bash
-npm install mysql2 debug @dotenvx/dotenvx express
+npm install mysql2 debug @dotenvx/dotenvx
 ```
 
 ## Environment Setup
@@ -52,8 +53,7 @@ const activeUsers = await model
 const adminUsers = await model
   .select('id', 'name')
   .where('status', '=', 'active')
-  .and()
-  .where('role', '=', 'admin')
+  .andWhere('role', '=', 'admin')
   .done()
 
 // Using orWhere for OR conditions
@@ -61,13 +61,6 @@ const privilegedUsers = await model
   .select('id', 'name', 'role')
   .where('role', '=', 'admin')
   .orWhere('role', '=', 'moderator')
-  .done()
-
-// Using andWhere for AND conditions
-const activeAdminUsers = await model
-  .select('id', 'name', 'role')
-  .where('status', '=', 'active')
-  .andWhere('role', '=', 'admin')
   .done()
 
 // Using grouped conditions
@@ -81,28 +74,10 @@ const complexUsers = await model
   })
   .done()
 
-// Using whereIn for multiple values
-const privilegedUsersIn = await model
-  .select('id', 'name', 'role')
-  .whereIn('role', ['admin', 'moderator', 'supervisor'])
-  .done()
-
-// Using whereNotIn to exclude values
-const activeUsersNotIn = await model
-  .select('id', 'name', 'email')
-  .whereNotIn('status', ['inactive', 'banned', 'deleted'])
-  .done()
-
-// Check for NULL values
-const deletedUsers = await model
-  .select('id', 'name')
-  .whereIsNull('deleted_at')
-  .done()
-
-// Check for non-NULL values
-const verifiedUsers = await model
-  .select('id', 'email')
-  .whereIsNotNull('email_verified_at')
+// Update records
+const updateResult = await model
+  .update({ status: 'inactive', updated_at: new Date() })
+  .where('last_login', '<', '2024-01-01')
   .done()
 ```
 
@@ -165,6 +140,23 @@ model.selectAll()
 **Throws:**
 - Error if any arguments are provided: "selectAll method takes none or 0 arguments!"
 
+#### `update(details)`
+Create an UPDATE query with the provided column-value pairs.
+
+```javascript
+model.update({ 
+  status: 'active', 
+  updated_at: new Date(),
+  view_count: 100 
+})
+```
+
+**Throws:**
+- Error if details is null or undefined: "Update method argument can not be null or undefined!"
+- Error if details is not an object or is an array: "Update method must take in a none empty object type e.g {column: value, ...}!"
+- Error if details is an empty object: "Update method requires none empty object as its argument!"
+- Error if chained after another query method: "Update method can not be chained after another query builder method!"
+
 #### `where(column, operator, value)`
 Add WHERE condition to the query.
 
@@ -193,8 +185,7 @@ model.where('name', '=', { value: 123, type: 'string' })
 - Error if column is not a string or is empty: "Column should be string type and not be empty"
 - Error if operator is not supported: "Supported operators (=,!=,<>,>,>=,<,<=,LIKE,NOT LIKE)"
 - Error if trying to use IN/NOT IN/NULL operators: "For the current used operator IN, consider using corresponding method operator (whereIsNotNull(), whereIsNull(), whereIn(), whereNotIn())"
-- Error if value object is missing required keys: "Value key is required and must carry a valid value!" or "Type key is required and must contain a string type as value"
-- Error if value object contains invalid data: "Value can not be (null, undefined, {}, []) or empty!"
+- Error if chained after another where(): "Where method can not be chain after another one, consider using the following methods after where (or(), and(), orWhere(), andWhere(), orGroup(cb), andGroup(cb))"
 
 #### `orWhere(column, operator, value)`
 Add OR WHERE condition to the query. Must be chained after an initial `where()` call.
@@ -375,7 +366,7 @@ console.log(model.select('id').operatorSignal) // false
 
 ## Examples
 
-### Basic Queries
+### Basic SELECT Queries
 
 ```javascript
 import miniORM from './miniORM.js'
@@ -436,15 +427,6 @@ const activeAdmins = await model
   .where('status', '=', 'active')
   .andWhere('role', '=', 'admin')
   .done()
-
-// Mixed conditions
-const complexQuery = await model
-  .select('*')
-  .where('status', '=', 'active')
-  .and()
-  .where('age', '>=', 18)
-  .orWhere('verified', '=', true)
-  .done()
 ```
 
 ### WHERE IN/NOT IN Queries
@@ -467,22 +449,6 @@ const specificUsers = await model
   .select('*')
   .where('department', '=', 'engineering')
   .andWhere('status', '=', 'active')
-  .orWhere('user_id', 'IN', [1, 5, 10])
-  .done()
-
-// Using IN with grouped conditions
-const complexQuery = await model
-  .select('*')
-  .where('company', '=', 'TechCorp')
-  .andGroup((builder) => {
-    return builder
-      .whereIn('role', ['admin', 'manager'])
-      .orGroup((nestedBuilder) => {
-        return nestedBuilder
-          .whereNotIn('department', ['hr', 'finance'])
-          .andWhere('level', '>=', 'senior')
-      })
-  })
   .done()
 ```
 
@@ -508,28 +474,36 @@ const incompleteProfiles = await model
   .and()
   .whereIsNull('phone')
   .done()
+```
 
-// Using andWhere for chaining
-const activeIncomplete = await model
-  .select('id', 'name', 'email')
-  .where('status', '=', 'active')
-  .andWhere('profile_completed', '=', false)
-  .orGroup((builder) => {
-    return builder
-      .whereIsNull('phone')
-      .or()
-      .whereIsNull('address')
-  })
+### UPDATE Queries
+
+```javascript
+// Update single record
+const updateResult = await model
+  .update({ status: 'inactive', updated_at: new Date() })
+  .where('user_id', '=', 123)
   .done()
 
-// Complex NULL checking with grouping
-const needsAttention = await model
-  .select('*')
-  .whereIsNotNull('created_at')
+// Update multiple records with WHERE condition
+const bulkUpdate = await model
+  .update({ 
+    status: 'verified',
+    verification_date: new Date(),
+    points: 100
+  })
+  .where('email_verified', '=', true)
+  .andWhere('status', '=', 'pending')
+  .done()
+
+// Update with complex conditions
+const complexUpdate = await model
+  .update({ last_activity: new Date() })
+  .where('status', '=', 'active')
   .andGroup((builder) => {
     return builder
-      .whereIsNull('last_login')
-      .orWhere('status', '=', 'pending')
+      .where('role', '=', 'admin')
+      .orWhere('last_login', '>', '2024-01-01')
   })
   .done()
 ```
@@ -553,28 +527,6 @@ const verifiedUsers = await model
 const userById = await model
   .select('*')
   .where('user_id', '=', { value: 123, type: 'string' })
-  .done()
-```
-
-### LIKE Patterns
-
-```javascript
-// Find users with names containing 'john'
-const johns = await model
-  .select('*')
-  .where('name', 'LIKE', '%john%')
-  .done()
-
-// Find users with emails ending in '@gmail.com'
-const gmailUsers = await model
-  .select('*')
-  .where('email', 'LIKE', '%@gmail.com')
-  .done()
-
-// Find users NOT like pattern
-const nonGmailUsers = await model
-  .select('*')
-  .where('email', 'NOT LIKE', '%@gmail.com')
   .done()
 ```
 
@@ -646,18 +598,21 @@ app.get('/users', async (req, res) => {
   }
 })
 
-app.get('/posts/:author', async (req, res) => {
+app.put('/users/:id/activate', async (req, res) => {
   try {
-    const { author } = req.params
+    const { id } = req.params
     const model = new miniORM()
-    model.setTable('posts')
+    model.setTable('users')
     
-    const posts = await model
-      .select('post_id', 'post_title', 'post_body')
-      .where('post_author', '=', author)
+    const result = await model
+      .update({ 
+        status: 'active',
+        activated_at: new Date()
+      })
+      .where('id', '=', id)
       .done()
       
-    res.json(posts)
+    res.json({ success: true, affected: result.affectedRows })
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
@@ -694,38 +649,6 @@ try {
   console.error(error.message)
   // "orWhere method can not be called after and()/or() method operator!"
 }
-
-try {
-  // This will throw - andWhere called incorrectly
-  await model.select('*').and().andWhere('status', '=', 'active').done()
-} catch (error) {
-  console.error(error.message)
-  // "andWhere method can not be called after and()/or() method operator!"
-}
-
-try {
-  // This will throw - andWhere called before where
-  await model.select('*').andWhere('status', '=', 'active').done()
-} catch (error) {
-  console.error(error.message)
-  // "andWhere method must be chained after the where method!"
-}
-
-try {
-  // This will throw - empty list for whereIn
-  await model.select('*').whereIn('role', []).done()
-} catch (error) {
-  console.error(error.message)
-  // "List should be an array type and not empty!"
-}
-
-try {
-  // This will throw - invalid column for whereNotIn
-  await model.select('*').whereNotIn('', ['admin', 'user']).done()
-} catch (error) {
-  console.error(error.message)
-  // "Column should be string and not empty!"
-}
 ```
 
 ### WHERE Condition Errors
@@ -745,6 +668,26 @@ try {
 } catch (error) {
   console.error(error.message)
   // "Cannot cast 'abc' to number"
+}
+```
+
+### UPDATE Errors
+
+```javascript
+try {
+  // This will throw - empty update object
+  await model.update({}).where('id', '=', 1).done()
+} catch (error) {
+  console.error(error.message)
+  // "Update method requires none empty object as its argument!"
+}
+
+try {
+  // This will throw - chaining update after select
+  await model.select('*').update({ name: 'test' }).done()
+} catch (error) {
+  console.error(error.message)
+  // "Update method can not be chained after another query builder method!"
 }
 ```
 
@@ -806,6 +749,7 @@ const model = new miniORM({
 Builder (Base Class)
 ├── select()
 ├── selectAll()  
+├── update()
 ├── where()
 ├── orWhere()
 ├── andWhere()
@@ -817,7 +761,7 @@ Builder (Base Class)
 ├── or()
 ├── orGroup()
 ├── andGroup()
-└── clone()
+└── [_clone]()
 
 miniORM (Extended Class)
 ├── constructor()
@@ -869,6 +813,62 @@ model.where('active', '=', { value: 'yes', type: 'boolean' }) // Converts 'yes' 
 model.where('user_id', '=', { value: 123, type: 'string' }) // Converts 123 to '123'
 ```
 
+## Method Chaining Rules
+
+Understanding the proper order of method chaining is crucial for building valid queries:
+
+### 1. Query Initialization
+Always start with a table selection and column specification:
+```javascript
+// Required first steps
+model.setTable('users')
+const query = model.select('id', 'name') // or selectAll() or update({...})
+```
+
+### 2. WHERE Clause Initiation
+The first condition must use `where()`:
+```javascript
+// ✅ Correct
+query.where('status', '=', 'active')
+
+// ❌ Wrong - will throw error
+query.andWhere('status', '=', 'active') // Error: must be chained after where method
+query.orWhere('status', '=', 'active')  // Error: must be chained after where method
+```
+
+### 3. Subsequent Conditions
+After the initial `where()`, use these methods:
+
+**Direct chaining methods:**
+- `andWhere()` - adds AND condition
+- `orWhere()` - adds OR condition
+- `andGroup()` - adds AND grouped conditions
+- `orGroup()` - adds OR grouped conditions
+
+**Operator methods (require additional where):**
+- `and().where()` - adds AND operator + condition
+- `or().where()` - adds OR operator + condition
+
+### 4. Invalid Chaining Patterns
+
+```javascript
+// ❌ Wrong - operator methods can't be followed by *Where methods
+query
+  .where('status', '=', 'active')
+  .and()
+  .andWhere('role', '=', 'admin') // Error!
+
+// ❌ Wrong - query cannot end with operators
+query
+  .where('status', '=', 'active')
+  .and() // Error: query cannot end with logical operator
+
+// ❌ Wrong - where cannot be chained after where
+query
+  .where('status', '=', 'active')
+  .where('role', '=', 'admin') // Error: use andWhere/orWhere instead
+```
+
 ## Project Structure
 
 ```
@@ -885,9 +885,9 @@ miniORM/
 ├── examples/
 │   ├── auto-closing-demo.js    # Connection cleanup demo
 │   └── test-auto-closing.js    # Auto-cleanup tests
-├── auto-example.js        # Basic usage example with Express
-├── usage-examples.js      # Advanced patterns (contains planned features)
-├── index.js               # Production example
+├── auto-example.js        # Basic usage example
+├── example-app.js         # Express integration example
+├── index.js               # Demo server
 └── README.md              # This file
 ```
 
@@ -896,7 +896,6 @@ miniORM/
 - **mysql2**: MySQL client with promise support
 - **debug**: Debug logging utility
 - **@dotenvx/dotenvx**: Environment variable management
-- **express**: Web framework (for examples)
 
 ## Environment Variables
 
@@ -936,14 +935,8 @@ const activeQuery = activeUsersBase
   .select('id', 'name', 'email')
   .where('status', '=', 'active')
 
-// Extend with different conditions using orWhere
-const adminOrModeratorUsers = await activeQuery
-  .orWhere('role', '=', 'admin')
-  .orWhere('role', '=', 'moderator')
-  .done()
-
-// Extend with AND conditions using andWhere
-const activeAdminUsers = await activeQuery
+// Extend with different conditions
+const adminUsers = await activeQuery
   .andWhere('role', '=', 'admin')
   .done()
 
@@ -974,10 +967,11 @@ async function getUsers(filters) {
   
   if (filters.minAge) {
     if (hasConditions) {
-      query = query.and()
+      query = query.andWhere('age', '>=', filters.minAge)
+    } else {
+      query = query.where('age', '>=', filters.minAge)
+      hasConditions = true
     }
-    query = query.where('age', '>=', filters.minAge)
-    hasConditions = true
   }
   
   if (filters.role && hasConditions) {
@@ -986,221 +980,13 @@ async function getUsers(filters) {
     query = query.where('role', '=', filters.role)
   }
   
-  // Example with grouped conditions
-  if (filters.adminOrModerator && hasConditions) {
-    query = query.andGroup((builder) => {
-      return builder
-        .where('role', '=', 'admin')
-        .orWhere('role', '=', 'moderator')
-    })
-  }
-  
   return await query.done()
 }
 
 const results = await getUsers({ status: 'active', minAge: 18, role: 'admin' })
 ```
 
-## Real-World Examples
-
-### E-commerce User Management
-
-```javascript
-import miniORM from './miniORM.js'
-
-const usersModel = new miniORM()
-usersModel.setTable('users')
-
-// Find VIP customers: active users with high spending or premium membership
-async function getVIPCustomers() {
-  return await usersModel
-    .select('id', 'name', 'email', 'membership_type', 'total_spent')
-    .where('status', '=', 'active')
-    .andGroup((builder) => {
-      return builder
-        .where('total_spent', '>', 1000)
-        .orWhere('membership_type', '=', 'premium')
-    })
-    .done()
-}
-
-// Find customers needing attention: inactive OR (low spending AND no recent orders)
-async function getCustomersNeedingAttention() {
-  return await usersModel
-    .select('id', 'name', 'email', 'last_login', 'total_spent')
-    .where('status', '=', 'inactive')
-    .orGroup((builder) => {
-      return builder
-        .where('total_spent', '<', 100)
-        .andWhere('last_order_date', '<', '2024-01-01')
-    })
-    .done()
-}
-```
-
-### Blog Content Management
-
-```javascript
-const postsModel = new miniORM()
-postsModel.setTable('posts')
-
-// Find featured content: published posts by staff OR highly rated posts
-async function getFeaturedContent() {
-  return await postsModel
-    .select('id', 'title', 'author', 'rating', 'publish_date')
-    .where('status', '=', 'published')
-    .andGroup((builder) => {
-      return builder
-        .where('author_type', '=', 'staff')
-        .orGroup((nestedBuilder) => {
-          return nestedBuilder
-            .where('rating', '>=', 4.5)
-            .andWhere('view_count', '>', 1000)
-        })
-    })
-    .done()
-}
-
-// Content moderation: find posts needing review
-async function getPostsNeedingReview() {
-  return await postsModel
-    .select('id', 'title', 'author', 'created_at', 'report_count')
-    .where('status', '=', 'pending')
-    .orGroup((builder) => {
-      return builder
-        .where('report_count', '>', 3)
-        .andWhere('status', '=', 'published')
-    })
-    .andWhere('reviewed', '=', false)
-    .done()
-}
-```
-
-### Employee Management System
-
-```javascript
-const employeesModel = new miniORM()
-employeesModel.setTable('employees')
-
-// Find employees eligible for promotion: senior level with good performance OR managers with leadership scores
-async function getPromotionCandidates() {
-  return await employeesModel
-    .select('id', 'name', 'department', 'level', 'performance_score')
-    .where('status', '=', 'active')
-    .andGroup((builder) => {
-      return builder
-        .where('level', '=', 'senior')
-        .andWhere('performance_score', '>=', 4.0)
-    })
-    .orGroup((builder) => {
-      return builder
-        .where('position', 'LIKE', '%manager%')
-        .andWhere('leadership_score', '>=', 4.5)
-    })
-    .done()
-}
-
-// Find at-risk employees: poor performance OR attendance issues
-async function getAtRiskEmployees() {
-  return await employeesModel
-    .select('id', 'name', 'department', 'performance_score', 'attendance_rate')
-    .where('status', '=', 'active')
-    .andGroup((builder) => {
-      return builder
-        .where('performance_score', '<', 2.5)
-        .orWhere('attendance_rate', '<', 0.8)
-        .orWhere('disciplinary_actions', '>', 2)
-    })
-    .done()
-}
-```
-
-### Search and Filter API
-
-```javascript
-import express from 'express'
-
-const app = express()
-const productsModel = new miniORM()
-productsModel.setTable('products')
-
-// Advanced product search with multiple filters
-app.get('/api/products/search', async (req, res) => {
-  try {
-    const { category, minPrice, maxPrice, inStock, featured, rating } = req.query
-    
-    let query = productsModel.select('id', 'name', 'price', 'category', 'stock', 'rating')
-    let hasConditions = false
-    
-    // Category filter
-    if (category) {
-      query = query.where('category', '=', category)
-      hasConditions = true
-    }
-    
-    // Price range with grouped conditions
-    if (minPrice || maxPrice) {
-      if (hasConditions) {
-        query = query.andGroup((builder) => {
-          let priceQuery = builder
-          if (minPrice) priceQuery = priceQuery.where('price', '>=', minPrice)
-          if (maxPrice) {
-            if (minPrice) priceQuery = priceQuery.andWhere('price', '<=', maxPrice)
-            else priceQuery = priceQuery.where('price', '<=', maxPrice)
-          }
-          return priceQuery
-        })
-      } else {
-        if (minPrice) query = query.where('price', '>=', minPrice)
-        if (maxPrice) {
-          if (minPrice) query = query.andWhere('price', '<=', maxPrice)
-          else query = query.where('price', '<=', maxPrice)
-        }
-        hasConditions = true
-      }
-    }
-    
-    // Stock and featured status
-    if (inStock === 'true' || featured === 'true') {
-      const stockAndFeatured = (builder) => {
-        let stockQuery = builder
-        if (inStock === 'true') stockQuery = stockQuery.where('stock', '>', 0)
-        if (featured === 'true') {
-          if (inStock === 'true') stockQuery = stockQuery.andWhere('featured', '=', true)
-          else stockQuery = stockQuery.where('featured', '=', true)
-        }
-        return stockQuery
-      }
-      
-      if (hasConditions) {
-        query = query.andGroup(stockAndFeatured)
-      } else {
-        query = stockAndFeatured(query)
-        hasConditions = true
-      }
-    }
-    
-    // High rating filter
-    if (rating) {
-      if (hasConditions) {
-        query = query.andWhere('rating', '>=', parseFloat(rating))
-      } else {
-        query = query.where('rating', '>=', parseFloat(rating))
-      }
-    }
-    
-    const results = await query.done()
-    res.json(results)
-    
-  } catch (error) {
-    res.status(500).json({ error: error.message })
-  }
-})
-```
-
-### Complete Working Example
-
-Here's a complete working example based on the actual implementation:
+## Complete Working Example
 
 ```javascript
 import express from 'express'
@@ -1220,8 +1006,8 @@ const usersModel = new miniORM()
 postsModel.setTable('posts')
 usersModel.setTable('users')
 
-// Complex query with grouping - find posts by specific authors OR high engagement
-app.get('/', async (req, res) => {
+// Complex query with grouping
+app.get('/featured-posts', async (req, res) => {
   try {
     const results = await postsModel
       .select('id', 'title', 'author', 'views', 'likes')
@@ -1244,108 +1030,35 @@ app.get('/', async (req, res) => {
   }
 })
 
-// User search with multiple criteria
-app.get('/users/advanced-search', async (req, res) => {
+// User update endpoint
+app.put('/users/:id/promote', async (req, res) => {
   try {
-    const results = await usersModel
-      .select('id', 'name', 'email', 'role', 'last_login')
-      .where('status', '=', 'active')
-      .andWhere('email_verified', '=', true)
-      .andGroup((builder) => {
-        return builder
-          .where('role', '=', 'admin')
-          .orWhere('role', '=', 'moderator')
-          .orGroup((nestedBuilder) => {
-            return nestedBuilder
-              .where('role', '=', 'user')
-              .andWhere('premium', '=', true)
-          })
+    const { id } = req.params
+    const result = await usersModel
+      .update({ 
+        role: 'admin',
+        promoted_at: new Date(),
+        updated_by: 'system'
       })
+      .where('id', '=', id)
+      .andWhere('status', '=', 'active')
       .done()
     
-    res.json(results)
+    res.json({ success: true, affected: result.affectedRows })
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
 })
 
-// Start server with automatic cleanup
-const server = app.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`)
   console.log('✨ Auto shutdown enabled - press Ctrl+C to gracefully stop!')
 })
-
-// Graceful shutdown (connection pool closes automatically)
-process.on('SIGINT', () => {
-  console.log('\n🛑 Received shutdown signal')
-  server.close(() => {
-    console.log('✅ Server closed')
-    console.log('🔌 Connection pool will close automatically')
-  })
-})
 ```
 
-## Method Chaining Rules and Best Practices
+## Best Practices
 
-### Chaining Rules
-
-Understanding the proper order of method chaining is crucial for building valid queries:
-
-#### 1. Query Initialization
-Always start with a table selection and column specification:
-```javascript
-// Required first steps
-model.setTable('users')
-const query = model.select('id', 'name') // or selectAll()
-```
-
-#### 2. WHERE Clause Initiation
-The first condition must use `where()`:
-```javascript
-// ✅ Correct
-query.where('status', '=', 'active')
-
-// ❌ Wrong - will throw error
-query.andWhere('status', '=', 'active') // Error: must be chained after where method
-query.orWhere('status', '=', 'active')  // Error: must be chained after where method
-```
-
-#### 3. Subsequent Conditions
-After the initial `where()`, use these methods:
-
-**Direct chaining methods:**
-- `andWhere()` - adds AND condition
-- `orWhere()` - adds OR condition
-- `andGroup()` - adds AND grouped conditions
-- `orGroup()` - adds OR grouped conditions
-
-**Operator methods (require additional where):**
-- `and().where()` - adds AND operator + condition
-- `or().where()` - adds OR operator + condition
-
-#### 4. Invalid Chaining Patterns
-
-```javascript
-// ❌ Wrong - operator methods can't be followed by *Where methods
-query
-  .where('status', '=', 'active')
-  .and()
-  .andWhere('role', '=', 'admin') // Error!
-
-// ❌ Wrong - query cannot end with operators
-query
-  .where('status', '=', 'active')
-  .and() // Error: query cannot end with logical operator
-
-// ❌ Wrong - where cannot be chained after where
-query
-  .where('status', '=', 'active')
-  .where('role', '=', 'admin') // Error: use andWhere/orWhere instead
-```
-
-### Best Practices
-
-#### 1. Choose the Right Method
+### 1. Choose the Right Method
 
 **Use `andWhere/orWhere` for simple conditions:**
 ```javascript
@@ -1369,9 +1082,8 @@ const result = await model
   .done()
 ```
 
-#### 2. Use Groups for Complex Logic
+### 2. Use Groups for Complex Logic
 
-**Group related conditions:**
 ```javascript
 // Find users: active AND (admin OR moderator with high rating)
 const result = await model
@@ -1389,43 +1101,7 @@ const result = await model
   .done()
 ```
 
-#### 3. Handle Dynamic Conditions
-
-```javascript
-function buildUserQuery(filters) {
-  let query = model.select('*')
-  let hasConditions = false
-  
-  // First condition must use where()
-  if (filters.status) {
-    query = query.where('status', '=', filters.status)
-    hasConditions = true
-  }
-  
-  // Subsequent conditions use andWhere/orWhere
-  if (filters.role) {
-    if (hasConditions) {
-      query = query.andWhere('role', '=', filters.role)
-    } else {
-      query = query.where('role', '=', filters.role)
-      hasConditions = true
-    }
-  }
-  
-  // Use groups for complex conditions
-  if (filters.adminOrModerator && hasConditions) {
-    query = query.andGroup((builder) => {
-      return builder
-        .where('role', '=', 'admin')
-        .orWhere('role', '=', 'moderator')
-    })
-  }
-  
-  return query
-}
-```
-
-#### 4. Debugging Complex Queries
+### 3. Debugging Complex Queries
 
 Use the `state` property to inspect your query:
 
@@ -1445,10 +1121,10 @@ console.log('Values:', query.state.values)
 // Values: ['active', 'admin', 'IT']
 ```
 
-#### 5. Error Prevention
+### 4. Error Prevention
 
 **Always check your chaining order:**
-1. Start with `select()` or `selectAll()`
+1. Start with `select()`, `selectAll()`, or `update()`
 2. First condition with `where()`
 3. Additional conditions with `andWhere()`, `orWhere()`, or groups
 4. End with `done()`
@@ -1462,6 +1138,5 @@ model.where('x', '=', 1).and() // Ending with operator
 ```
 
 ## License
-
 
 ISC
