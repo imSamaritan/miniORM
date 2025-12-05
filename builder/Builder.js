@@ -1,6 +1,11 @@
 import Helper, { _cloneMethodSymbol as _clone } from '../helper/Helper.js'
+const _throwError = Symbol()
 
 class Builder {
+  // ---IMPLEMENTATION DETAILS ---//
+  [_throwError](error) {
+    throw new Error(error)
+  }
   /**
    * @param {string} column
    * @param {string} operator
@@ -103,6 +108,8 @@ class Builder {
     return this[_clone](state)
   }
 
+  // ---PUBLIC API IMPLEMENTATION DETAILS ---//
+
   /** @param {string[]} columns @return {Builder} */
   select(...columns) {
     if (columns.length < 1) throw new Error('Column or columns, required!')
@@ -131,6 +138,45 @@ class Builder {
     if (arguments.length > 0)
       throw new Error('selectAll method takes none or 0 arguments!')
     return this.select('*')
+  }
+
+  /**
+   * @param {object} details
+   * @returns {Builder}
+   */
+  update(details) {
+    const { query } = this.state
+    const values = []
+
+    if (details === undefined || details === null)
+      this[_throwError]('Update method argument can not be null or undefined!')
+
+    if (Array.isArray(details) || typeof details != 'object')
+      this[_throwError](
+        'Update method must take in a none empty object type e.g {column: value, ...}!',
+      )
+
+    if (query.length > 0)
+      this[_throwError](
+        'Update method can not be chained after another query builder method!',
+      )
+
+    const keys = Object.keys(details)
+    const columns = keys.map((key) => `${key} = ?`)
+
+    if (keys.length < 1)
+      this[_throwError](
+        'Update method requires none empty object as its argument!',
+      )
+
+    for (const key of keys) values.push(details[key])
+
+    console.log(values)
+
+    return this[_clone]({
+      query: [`UPDATE ${this.table} SET ${columns.join(', ')}`],
+      values: [...values],
+    })
   }
 
   /**
@@ -241,7 +287,7 @@ class Builder {
     else
       state = {
         query: [...query, `WHERE ${column} ${operator} ?`],
-        values: [stateValue],
+        values: [...values, stateValue],
       }
 
     return this[_clone](state, true)

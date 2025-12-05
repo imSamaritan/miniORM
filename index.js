@@ -40,10 +40,12 @@ const app = express()
 app.get('/', async (req, res) => {
   try {
     const results = await postsModel
-      .selectAll()
-      .whereIsNull('post_likes')
-      .orGroup((builder) => builder.whereIsNotNull('post_author'))
+      .update({post_likes: 12})
+      .where('post_id', '=', 1)
+      .and()
+      .where('post_author', '=', 'Imsamaritan')
       .done()
+    console.log(postsModel.state)
     return res.send(results)
   } catch (error) {
     console.log(error)
