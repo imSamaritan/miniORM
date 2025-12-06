@@ -127,8 +127,7 @@ class Builder {
         query: [`SELECT ${columns.join(', ')} FROM ${this.table}`],
         values: [],
       },
-      false,
-      'all',
+      false
     )
   }
 

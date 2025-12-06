@@ -4,7 +4,7 @@ import Execute from './execute/Execute.js'
 import Builder from './builder/Builder.js'
 import {
   _cloneMethodSymbol as _clone,
-  _throwErrorMethodSymbol as _throwError
+  _throwErrorMethodSymbol as _throwError,
 } from './helper/Helper.js'
 
 const queryDebugger = debug('miniORM:query')
@@ -76,6 +76,16 @@ class miniORM extends Builder {
    */
   setTable(table) {
     this.#table = table
+  }
+
+  fromTable(table) {
+    if (this.state.query.length > 0)
+      this[_throwError](
+        '[fromTable] method is an alternative to [setTable] method and also it should be first on the chain e.g postsModel.fromTable()',
+      )
+
+    this.setTable(table)
+    return this[_clone]({ query: [], values: [] })
   }
 
   /*** @return {string}*/
