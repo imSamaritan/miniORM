@@ -21,12 +21,8 @@ console.log('============================================')
 
 // Create multiple instances to demonstrate shared pool
 const postsModel = new miniORM()
-const usersModel = new miniORM()
-const categoriesModel = new miniORM()
 
 postsModel.setTable('posts')
-usersModel.setTable('posts')
-categoriesModel.setTable('categories')
 
 console.log(
   '✅ Created 3 miniORM instances (all share the same connection pool)',
@@ -36,19 +32,26 @@ console.log('✅ Auto-closing behavior enabled - no manual cleanup required')
 const PORT = process.env.PORT || 3000
 const app = express()
 
-// Posts endpoint
+app.use(express.json())
+
 app.get('/', async (req, res) => {
   try {
-    const results = await postsModel
-      .update({post_likes: 12})
-      .where('post_id', '=', 1)
-      .and()
-      .where('post_author', '=', 'Imsamaritan')
-      .done()
-    console.log(postsModel.state)
-    return res.send(results)
+    const results = await postsModel.selectAll().done()
+    return res.json(results)
   } catch (error) {
-    console.log(error)
+    return res.status(400).send(error.message)
+  }
+})
+
+// Posts endpoint
+app.post('/posts', async (req, res) => {
+  const { post_author, post_title, post_body, post_likes } = req.body
+  try {
+    const results = await postsModel
+      .insert({ post_author, post_title, post_body, post_likes })
+      .done()
+    return res.status(201).json({post_id: results.insertId})
+  } catch (error) {
     res.status(400).send({ error: error.message })
   }
 })

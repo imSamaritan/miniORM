@@ -2,18 +2,13 @@ import mysql from 'mysql2/promise'
 import debug from 'debug'
 import Execute from './execute/Execute.js'
 import Builder from './builder/Builder.js'
-import { _cloneMethodSymbol as _clone } from './helper/Helper.js'
+import {
+  _cloneMethodSymbol as _clone,
+  _throwErrorMethodSymbol as _throwError
+} from './helper/Helper.js'
 
 const queryDebugger = debug('miniORM:query')
 
-/**
- * miniORM - A lightweight ORM with auto-closing connection pool
- *
- * Connection pool management is handled automatically:
- * - Pool is created once and reused across all instances
- * - Automatic cleanup occurs when the process exits
- * - Manual closing is not supported - all consumers use auto-closing
- */
 class miniORM extends Builder {
   #options
   #state
@@ -31,7 +26,7 @@ class miniORM extends Builder {
     options = {},
     state = { query: [], values: [] },
     isOperator = false,
-    executeMethod = 'all',
+    executeMethod = 'exec',
   ) {
     super()
     this.#options = options
@@ -40,6 +35,16 @@ class miniORM extends Builder {
     this.#executeMethod = executeMethod
 
     this.#execute = new Execute(options)
+  }
+
+  /**
+   *
+   * @param {Error} error
+   * @returns {never}
+   */
+  //ERROR HANDLE
+  [_throwError](error) {
+    throw new Error(error)
   }
 
   /**

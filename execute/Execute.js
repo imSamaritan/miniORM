@@ -19,7 +19,7 @@ class Execute {
     }
   }
 
-  async all(query, values = []) {
+  async exec(query, values = []) {
     try {
       const pool = await this.#connect()
       const [rows] = await pool.execute(query, values)

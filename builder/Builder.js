@@ -1,11 +1,10 @@
-import Helper, { _cloneMethodSymbol as _clone } from '../helper/Helper.js'
-const _throwError = Symbol()
+import Helper, {
+  _cloneMethodSymbol as _clone,
+  _throwErrorMethodSymbol as _throwError,
+} from '../helper/Helper.js'
 
 class Builder {
   // ---IMPLEMENTATION DETAILS ---//
-  [_throwError](error) {
-    throw new Error(error)
-  }
   /**
    * @param {string} column
    * @param {string} operator
@@ -144,6 +143,48 @@ class Builder {
    * @param {object} details
    * @returns {Builder}
    */
+
+  insert(details) {
+    const { query } = this.state
+    const values = []
+
+    if (details === undefined || details === null)
+      this[_throwError](
+        '[Insert] method argument can not be null or undefined!',
+      )
+
+    if (Array.isArray(details) || typeof details != 'object')
+      this[_throwError](
+        '[Insert] method must take in a none empty object type e.g {column: value, ...}!',
+      )
+
+    if (query.length > 0)
+      this[_throwError](
+        '[Insert] method can not be chained after another query builder method!',
+      )
+
+    const keys = Object.keys(details)
+    const valuesPlaceholders = keys.map((key) => `?`)
+
+    if (keys.length < 1)
+      this[_throwError](
+        '[Insert] method requires none empty object as its argument!',
+      )
+
+    for (const key of keys) values.push(details[key])
+
+    return this[_clone]({
+      query: [
+        `INSERT INTO ${this.table}(${keys.join(', ')}) VALUES(${valuesPlaceholders.join(', ')})`,
+      ],
+      values: [...values],
+    })
+  }
+
+  /**
+   * @param {object} details
+   * @returns {Builder}
+   */
   update(details) {
     const { query } = this.state
     const values = []
@@ -170,8 +211,6 @@ class Builder {
       )
 
     for (const key of keys) values.push(details[key])
-
-    console.log(values)
 
     return this[_clone]({
       query: [`UPDATE ${this.table} SET ${columns.join(', ')}`],
