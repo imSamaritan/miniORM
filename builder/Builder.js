@@ -52,7 +52,10 @@ class Builder {
     return callback(builder)
   }
 
-  /**@param {string} column @param {Array} list @param {'NOT IN'|'IN'} operator @return {Builder} */
+  /**@param {string} column 
+   * @param {Array} list 
+   * @param {'NOT IN'|'IN'} operator 
+   * @return {Builder} */
   #inOrNotIn(column, list, operator) {
     let state = { query: [], values: [] }
     const { query, values } = this.state
@@ -109,7 +112,7 @@ class Builder {
 
   // ---PUBLIC API IMPLEMENTATION DETAILS ---//
 
-  /** @param {string[]} columns @return {Builder} */
+  /** @param {string[]} columns @return {this} */
   select(...columns) {
     if (columns.length < 1) throw new Error('Column or columns, required!')
 
@@ -131,7 +134,7 @@ class Builder {
     )
   }
 
-  /** @return {Builder}*/
+  /** @return {this}*/
   selectAll() {
     if (arguments.length > 0)
       throw new Error('selectAll method takes none or 0 arguments!')
@@ -140,9 +143,8 @@ class Builder {
 
   /**
    * @param {object} details
-   * @returns {Builder}
+   * @returns {this}
    */
-
   insert(details) {
     const { query } = this.state
     const values = []
@@ -182,7 +184,7 @@ class Builder {
 
   /**
    * @param {object} details
-   * @returns {Builder}
+   * @returns {this}
    */
   update(details) {
     const { query } = this.state
@@ -221,7 +223,7 @@ class Builder {
   @param {string} column
   @param {string} operator
   @param {boolean|number|string|object} value
-  @return {Builder}*/
+  @return {this}*/
   where(column, operator, value) {
     let stateValue
     let state = { query: [], values: [] }
@@ -331,7 +333,7 @@ class Builder {
     return this[_clone](state, true)
   }
 
-  /** @return {Builder}*/
+  /** @return {this}*/
   or() {
     const { query, values } = this.state
     return this[_clone]({ query: [...query, 'OR'], values: [...values] }, true)
@@ -341,20 +343,20 @@ class Builder {
   @param {string} column
   @param {string} operator
   @param {boolean|number|string|object} value
-  @return {Builder}*/
+  @return {this}*/
   orWhere(column, operator, value) {
     return this.#andOr(column, operator, value, 'OR', 'orWhere')
   }
 
   /**
    * @param {Closure} callback
-   * @returns {Builder}
+   * @returns {this}
    */
   orGroup(callback) {
     return this.#group(callback, 'OR')
   }
 
-  /** @return {Builder}*/
+  /** @return {this}*/
   and() {
     const { query, values } = this.state
     return this[_clone]({ query: [...query, 'AND'], values: [...values] }, true)
@@ -364,7 +366,7 @@ class Builder {
   @param {string} column
   @param {string} operator
   @param {boolean|number|string|object} value
-  @return {Builder}
+  @return {this}
   */
   andWhere(column, operator, value) {
     return this.#andOr(column, operator, value, 'AND', 'andWhere')
@@ -372,23 +374,23 @@ class Builder {
 
   /**
    * @param {Closure} callback
-   * @returns {Builder}
+   * @returns {this}
    */
   andGroup(callback) {
     return this.#group(callback, 'AND')
   }
 
-  /**@param {string} column @param {Array} list @returns {Builder} */
+  /**@param {string} column @param {Array} list @returns {this} */
   whereIn(column, list) {
     return this.#inOrNotIn(column, list, 'IN')
   }
 
-  /**@param {string} column @param {Array} list @returns {Builder} */
+  /**@param {string} column @param {Array} list @returns {this} */
   whereNotIn(column, list) {
     return this.#inOrNotIn(column, list, 'NOT IN')
   }
 
-  /** @param {string} column @returns {Builder} */
+  /** @param {string} column @returns {this} */
   whereIsNull(column) {
     if (arguments.length < 1 || arguments.length > 1)
       throw new Error(
@@ -397,7 +399,7 @@ class Builder {
     return this.#nullOrNotNull(column, 'IS NULL')
   }
 
-  /** @param {string} column @returns {Builder} */
+  /** @param {string} column @returns {this} */
   whereIsNotNull(column) {
     if (arguments.length < 1 || arguments.length > 1)
       throw new Error(
