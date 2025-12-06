@@ -36,7 +36,7 @@ app.use(express.json())
 
 app.get('/', async (req, res) => {
   try {
-    const results = await postsModel.fromTable('posts').selectAll().done()
+    const results = await postsModel.fromTable('posts').selectAll()
     return res.json(results)
   } catch (error) {
     return res.status(400).json({ warning: error.message })
@@ -50,7 +50,6 @@ app.post('/posts', async (req, res) => {
     const results = await postsModel
       .fromTable(`posts`)
       .insert({ post_author, post_title, post_body, post_likes })
-      .done()
     return res.status(201).json({ post_id: results.insertId })
   } catch (error) {
     res.status(400).send({ error: error.message })

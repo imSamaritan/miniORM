@@ -119,6 +119,15 @@ class miniORM extends Builder {
 
     return await this.#execute[method](sql, values)
   }
+
+  /**
+   * @param {function(mysql.QueryResult): void} [resolve]
+   * @param {function(Error): void} [reject]
+   * @returns {Promise<mysql.QueryResult>}
+   */
+  then(resolve, reject) {
+    return this.done().then(resolve, reject)
+  }
 }
 
 // Export miniORM as default
