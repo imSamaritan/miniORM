@@ -116,7 +116,6 @@ class miniORM extends Builder {
     }
 
     queryDebugger(this.#state)
-
     return await this.#execute[method](sql, values)
   }
 

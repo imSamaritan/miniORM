@@ -1,3 +1,4 @@
+import { X509Certificate } from 'node:crypto'
 import Helper, {
   _cloneMethodSymbol as _clone,
   _throwErrorMethodSymbol as _throwError,
@@ -252,6 +253,7 @@ class Builder {
    */
   limit(limitTo) {
     const { query, values } = this.state
+    const state = {query: [], values: []}
 
     if (typeof limitTo != 'number')
       this[_throwError]('[limit] requires 1 argument of type number!')
@@ -259,17 +261,18 @@ class Builder {
     if (query.length < 1)
       this[_throwError]('[limit] can not be chained at top level of the chain')
 
-    this.state.query = [...query, `LIMIT ?`]
-    this.state.values = [...values, limitTo]
+    state.query = [...query, `LIMIT ?`]
+    state.values = [...values, limitTo]
 
     return this[_clone](this.state)
   }
-  
-  /**@param {number} offsetFrom 
+
+  /**@param {number} offsetFrom
    * @returns {this}
    */
   offset(offsetFrom) {
     const { query, values } = this.state
+    const state = { query: [], values: [] }
 
     if (typeof offsetFrom != 'number')
       this[_throwError]('[offset] requires 1 argument of type number!')
@@ -277,13 +280,31 @@ class Builder {
     if (query.length < 1)
       this[_throwError]('[offset] can not be chained at top level of the chain')
 
-    if (! query[query.length - 1].includes('LIMIT')) 
-      this[_throwError]('[offset] method must be chained after [limit] method claus')
-    
-    this.state.query = [...query, `OFFSET ?`]
-    this.state.values = [...values, offsetFrom]
+    if (!query[query.length - 1].includes('LIMIT'))
+      this[_throwError](
+        '[offset] method must be chained after [limit] method claus',
+      )
 
-    return this[_clone](this.state)
+    state.query = [...query, `OFFSET ?`]
+    state.values = [...values, offsetFrom]
+
+    return this[_clone](state)
+  }
+
+  countRecords() {
+    const { query } = this.state
+    const state = { query: [], values: [] }
+
+    if (arguments.length > 0)
+      this[_throwError]('[rowCount] method takes 0 arguments!')
+
+    if (query.length > 0)
+      this[_throwError](
+        '[rowCount] method should be chained first or at top level to the chain',
+      )
+
+    state.query.push(`SELECT COUNT(*) AS recordsCount FROM ${this.table}`)
+    return this[_clone](state)
   }
 
   /**
