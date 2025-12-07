@@ -213,6 +213,44 @@ model
 - Error if details is an empty object: "Update method requires none empty object as its argument!"
 - Error if chained after another query method: "Update method can not be chained after another query builder method!"
 
+#### `delete()`
+Create a DELETE query.
+
+```javascript
+model
+  .fromTable('users')
+  .delete()
+  .where('id', '=', 1)
+```
+
+**Throws:**
+- Error if chained after another query method: "DELETE method can not be chained after another query builder method!"
+
+#### `limit(number)`
+Add LIMIT clause to the query.
+
+**Example:**
+```javascript
+model.select('*').limit(10)
+```
+
+**Throws:**
+- Error if argument is not a number: "[limit] requires 1 argument of type number!"
+- Error if chained at top level: "[limit] can not be chained at top level of the chain"
+
+#### `offset(number)`
+Add OFFSET clause to the query. Must be chained after `limit()`.
+
+**Example:**
+```javascript
+model.select('*').limit(10).offset(20)
+```
+
+**Throws:**
+- Error if argument is not a number: "[offset] requires 1 argument of type number!"
+- Error if chained at top level: "[offset] can not be chained at top level of the chain"
+- Error if not chained after limit: "[offset] method must be chained after [limit] method claus"
+
 #### `where(column, operator, value)`
 Add WHERE condition to the query.
 
@@ -563,6 +601,40 @@ const complexUpdate = await model
       .where('role', '=', 'admin')
       .orWhere('last_login', '>', '2024-01-01')
   })
+```
+
+### DELETE Queries
+
+```javascript
+// Delete single record
+const deleteResult = await model
+  .fromTable('users')
+  .delete()
+  .where('id', '=', 123)
+  .done()
+
+// Delete with multiple conditions
+const bulkDelete = await model
+  .fromTable('logs')
+  .delete()
+  .where('status', '=', 'archived')
+  .andWhere('created_at', '<', '2023-01-01')
+  .done()
+```
+
+### Pagination and Counting
+
+```javascript
+// Get total count
+const count = await model.fromTable('users').countRecords().done()
+
+// Pagination: Get 10 users, skipping first 20
+const page3 = await model
+  .fromTable('users')
+  .select('*')
+  .limit(10)
+  .offset(20)
+  .done()
 ```
 
 ### Type Casting
