@@ -219,6 +219,34 @@ class Builder {
     })
   }
 
+  /** DELETE
+   * @returns {this}
+   */
+
+  delete() {
+    const { query, values } = this.state
+    const state = { query: [], values: [] }
+
+    if (query.length < 1) {
+      state.query = [`DELETE FROM ${this.table}`]
+    }
+
+    if (query.length > 0) {
+      const queryStartsWithWhere = query[0].startsWith('WHERE')
+
+      if (queryStartsWithWhere) {
+        state.query = [`DELETE FROM ${this.table}`, ...query]
+        state.values = [...values]
+      } else {
+        this[_throwError](
+          '[delete] method can not be positioned at this level from the method chain!',
+        )
+      }
+    }
+
+    return this[_clone](state)
+  }
+
   /**
   @param {string} column
   @param {string} operator
@@ -249,12 +277,12 @@ class Builder {
       'NOT BETWEEN',
     ]
 
-    const whereMethodUsed = query[query.length - 1].includes('WHERE')
-
-    if (whereMethodUsed) {
-      this[_throwError](
-        '"Where" method can not be chain after another one, consider using the following methods after where (or(), and(), orWhere(), andWhere(), orGroup(cb), andGroup(cb)',
-      )
+    if (query.length > 1) {
+      if (query[query.length - 1].includes('WHERE')) {
+        this[_throwError](
+          '"Where" method can not be chain after another one, consider using the following methods after where (or(), and(), orWhere(), andWhere(), orGroup(cb), andGroup(cb)',
+        )
+      }
     }
 
     operator = operator.toUpperCase()
