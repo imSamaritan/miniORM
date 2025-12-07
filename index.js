@@ -1,6 +1,7 @@
 import express from 'express'
 import dotenv from '@dotenvx/dotenvx'
 import miniORM from './miniORM.js'
+import { win32 } from 'node:path/win32'
 
 dotenv.config()
 
@@ -36,7 +37,11 @@ app.use(express.json())
 
 app.get('/', async (req, res) => {
   try {
-    const results = await miniORMModel.fromTable('posts').selectAll().done()
+    const results = await miniORMModel
+      .fromTable('posts')
+      .select(`*`)
+      .limit(4)
+      .offset(3)
     return res.json(results)
   } catch (error) {
     return res.status(400).json({ warning: error.message })

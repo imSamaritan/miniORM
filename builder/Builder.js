@@ -219,7 +219,7 @@ class Builder {
     })
   }
 
-  /** DELETE
+  /**
    * @returns {this}
    */
 
@@ -245,6 +245,45 @@ class Builder {
     }
 
     return this[_clone](state)
+  }
+
+  /**@param {number} limitTo
+   * @returns {this}
+   */
+  limit(limitTo) {
+    const { query, values } = this.state
+
+    if (typeof limitTo != 'number')
+      this[_throwError]('[limit] requires 1 argument of type number!')
+
+    if (query.length < 1)
+      this[_throwError]('[limit] can not be chained at top level of the chain')
+
+    this.state.query = [...query, `LIMIT ?`]
+    this.state.values = [...values, limitTo]
+
+    return this[_clone](this.state)
+  }
+  
+  /**@param {number} offsetFrom 
+   * @returns {this}
+   */
+  offset(offsetFrom) {
+    const { query, values } = this.state
+
+    if (typeof offsetFrom != 'number')
+      this[_throwError]('[offset] requires 1 argument of type number!')
+
+    if (query.length < 1)
+      this[_throwError]('[offset] can not be chained at top level of the chain')
+
+    if (! query[query.length - 1].includes('LIMIT')) 
+      this[_throwError]('[offset] method must be chained after [limit] method claus')
+    
+    this.state.query = [...query, `OFFSET ?`]
+    this.state.values = [...values, offsetFrom]
+
+    return this[_clone](this.state)
   }
 
   /**
