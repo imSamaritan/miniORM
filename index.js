@@ -36,12 +36,14 @@ const app = express()
 app.use(express.json())
 
 app.get('/', async (req, res) => {
+  miniORMModel.setTable(`posts`)
+
   try {
     const results = await miniORMModel
-      .fromTable('posts')
-      .select(`*`)
-      .limit(4)
-      .offset(3)
+      .fromTable(`posts`)
+      .countRecords()
+      .where(`post_likes`, `<`, 110)
+    
     return res.json(results)
   } catch (error) {
     return res.status(400).json({ warning: error.message })
