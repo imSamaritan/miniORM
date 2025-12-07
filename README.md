@@ -161,6 +161,17 @@ model.fromTable('users').selectAll()
 **Throws:**
 - Error if any arguments are provided: "selectAll method takes none or 0 arguments!"
 
+#### `countRecords()`
+Select count of all records in the table (equivalent to `SELECT COUNT(*) AS recordsCount`). Takes no arguments.
+
+```javascript
+const result = await model.fromTable('users').countRecords().done()
+```
+
+**Throws:**
+- Error if any arguments are provided: "[rowCount] method takes 0 arguments!"
+- Error if chained after another query method: "[rowCount] method should be chained first or at top level to the chain"
+
 #### `insert(details)`
 Create an INSERT query with the provided column-value pairs. Must be the first method in the chain after specifying the table.
 
