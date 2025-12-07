@@ -278,7 +278,7 @@ model.where('name', '=', { value: 123, type: 'string' })
 - Error if not exactly 3 arguments: "Where method takes 3 arguments (column,operator,value)!"
 - Error if column is not a string or is empty: "Column should be string type and not be empty"
 - Error if operator is not supported: "Supported operators (=,!=,<>,>,>=,<,<=,LIKE,NOT LIKE)"
-- Error if trying to use IN/NOT IN/NULL operators: "For the current used operator IN, consider using corresponding method operator (whereIsNotNull(), whereIsNull(), whereIn(), whereNotIn())"
+- Error if trying to use IN/NOT IN/NULL operators: "For the current used operator IN, consider using corresponding method operator (whereField(), whereIn(), whereNotIn())"
 - Error if chained after another where(): "Where method can not be chain after another one, consider using the following methods after where (or(), and(), orWhere(), andWhere(), orGroup(cb), andGroup(cb))"
 
 #### `orWhere(column, operator, value)`
@@ -341,45 +341,30 @@ This generates: `WHERE status NOT IN (?, ?, ?)`
 - Error if column is not a string or is empty: "Column should be string and not empty!"
 - Error if list is not an array or is empty: "List should be an array type and not empty!"
 
-#### `whereIsNull(column)`
-Add WHERE IS NULL condition to check if column value is NULL.
+#### `whereField(column)`
+Start a condition chain for a specific column. This method is used to apply operators like `IS NULL`, `IS NOT NULL`, `BETWEEN`, or `NOT BETWEEN`.
 
 ```javascript
-model
-  .select('*')
-  .whereIsNull('deleted_at')
+// Check for NULL
+model.whereField('deleted_at').isNull()
+
+// Check for range
+model.whereField('age').isBetween(18, 65)
 ```
 
-This generates: `WHERE deleted_at IS NULL`
+**Available Chained Methods:**
+
+- **`isNull()`**: Check if value is NULL
+- **`isNotNull()`**: Check if value is NOT NULL
+- **`isBetween(start, end)`**: Check if value is within range (inclusive)
+- **`isNotBetween(start, end)`**: Check if value is outside range
 
 **Chaining:**
 - Can be used as the first WHERE condition
-- When chaining after another WHERE condition, must use `and()`, `or()`, `andWhere()`, `orWhere()`, or grouping methods (`andGroup()`, `orGroup()`)
+- When chaining after another WHERE condition, must be preceded by `and()` or `or()`
 
 **Throws:**
-- Error if not exactly 1 argument: "'Column name' argument is the only one that is required!"
-- Error if column is not a string or is empty: "Column should be a string and not empty!"
-- Error if chained directly after `where()`: "where() and whereIsNull() methods must be chained through and() or or() or use grouping methods!"
-
-#### `whereIsNotNull(column)`
-Add WHERE IS NOT NULL condition to check if column value is not NULL.
-
-```javascript
-model
-  .select('*')
-  .whereIsNotNull('email')
-```
-
-This generates: `WHERE email IS NOT NULL`
-
-**Chaining:**
-- Can be used as the first WHERE condition
-- When chaining after another WHERE condition, must use `and()`, `or()`, `andWhere()`, `orWhere()`, or grouping methods (`andGroup()`, `orGroup()`)
-
-**Throws:**
-- Error if not exactly 1 argument: "'Column name' argument is the only one that is required!"
-- Error if column is not a string or is empty: "Column should be a string and not empty!"
-- Error if chained directly after `where()`: "where() and whereIsNull() methods must be chained through and() or or() or use grouping methods!"
+- Error if column is not a string or is empty
 
 #### `orGroup(callback)`
 Group WHERE conditions with OR logic. Takes a callback function that receives a builder instance.
@@ -547,28 +532,34 @@ const specificUsers = await model
   .andWhere('status', '=', 'active')
 ```
 
-### NULL Checking Queries
+### NULL Checking & Range Queries
 
 ```javascript
 // Find users with no deletion timestamp (active users)
 const activeUsers = await model
   .fromTable('users')
   .select('*')
-  .whereIsNull('deleted_at')
+  .whereField('deleted_at').isNull()
 
 // Find users with verified email addresses
 const verifiedUsers = await model
   .fromTable('users')
   .select('*')
-  .whereIsNotNull('email_verified_at')
+  .whereField('email_verified_at').isNotNull()
 
-// Combine NULL checks with other conditions using and()
+// Find users within a specific age range
+const adultUsers = await model
+  .fromTable('users')
+  .select('*')
+  .whereField('age').isBetween(18, 65)
+
+// Combine checks with other conditions using and()
 const incompleteProfiles = await model
   .fromTable('users')
   .select('id', 'name', 'email')
   .where('status', '=', 'active')
   .and()
-  .whereIsNull('phone')
+  .whereField('phone').isNull()
 ```
 
 ### UPDATE Queries
@@ -878,8 +869,11 @@ Builder (Base Class)
 ├── andWhere()
 ├── whereIn()
 ├── whereNotIn()
-├── whereIsNull()
-├── whereIsNotNull()
+├── whereField()
+├── isNull()
+├── isNotNull()
+├── isBetween()
+├── isNotBetween()
 ├── and()
 ├── or()
 ├── orGroup()
