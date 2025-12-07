@@ -57,6 +57,22 @@ app.post('/posts', async (req, res) => {
   }
 })
 
+//Delete post
+app.delete('/posts/:id', async (req, res) => {
+  const id = req.params.id
+  miniORMModel.setTable(`posts`)
+
+  try {
+    const results = await miniORMModel
+      .delete()
+      .where(`post_id`, `=`, { value: id, type: 'number' })
+      .done()
+    return res.send(results)
+  } catch (error) {
+    res.status(400).send({ error: error.message })
+  }
+})
+
 const server = app.listen(PORT, () => {
   console.log(`\n🌐 Server running on port ${PORT}`)
   console.log(`📊 Available endpoints:`)
