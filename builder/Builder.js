@@ -247,13 +247,32 @@ class Builder {
 
     return this[_clone](state)
   }
+  
+  /**
+   * @returns {this}
+   */
+  countRecords() {
+    const { query } = this.state
+    const state = { query: [], values: [] }
+
+    if (arguments.length > 0)
+      this[_throwError]('[rowCount] method takes 0 arguments!')
+
+    if (query.length > 0)
+      this[_throwError](
+        '[rowCount] method should be chained first or at top level to the chain',
+      )
+
+    state.query.push(`SELECT COUNT(*) AS recordsCount FROM ${this.table}`)
+    return this[_clone](state)
+  }
 
   /**@param {number} limitTo
    * @returns {this}
    */
   limit(limitTo) {
     const { query, values } = this.state
-    const state = {query: [], values: []}
+    const state = { query: [], values: [] }
 
     if (typeof limitTo != 'number')
       this[_throwError]('[limit] requires 1 argument of type number!')
@@ -288,22 +307,6 @@ class Builder {
     state.query = [...query, `OFFSET ?`]
     state.values = [...values, offsetFrom]
 
-    return this[_clone](state)
-  }
-
-  countRecords() {
-    const { query } = this.state
-    const state = { query: [], values: [] }
-
-    if (arguments.length > 0)
-      this[_throwError]('[rowCount] method takes 0 arguments!')
-
-    if (query.length > 0)
-      this[_throwError](
-        '[rowCount] method should be chained first or at top level to the chain',
-      )
-
-    state.query.push(`SELECT COUNT(*) AS recordsCount FROM ${this.table}`)
     return this[_clone](state)
   }
 
