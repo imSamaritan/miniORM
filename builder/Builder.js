@@ -19,13 +19,13 @@ class Builder {
     let whereMethodNotUsed = !query.join('').includes('WHERE')
 
     if (queryLastPart === 'AND' || queryLastPart === 'OR') {
-      throw new Error(
+      this[_throwError](
         `"${method}" method can not be called after and()/or() method operator!`,
       )
     }
 
     if (whereMethodNotUsed) {
-      throw new Error(
+      this[_throwError](
         `"${method}" method must be chained after the "where" method!`,
       )
     }
@@ -52,19 +52,19 @@ class Builder {
     return callback(builder)
   }
 
-  /**@param {string} column 
-   * @param {Array} list 
-   * @param {'NOT IN'|'IN'} operator 
+  /**@param {string} column
+   * @param {Array} list
+   * @param {'NOT IN'|'IN'} operator
    * @return {Builder} */
   #inOrNotIn(column, list, operator) {
     let state = { query: [], values: [] }
     const { query, values } = this.state
 
     if (typeof column != 'string' || column === '')
-      throw new Error('Column should be string and not empty!')
+      this[_throwError]('Column should be string and not empty!')
 
     if (!Array.isArray(list) || list.length < 1)
-      throw new Error('List should be an array type and not empty!')
+      this[_throwError]('List should be an array type and not empty!')
 
     const placeholders = list.map((value) => '?').join(',')
 
@@ -89,12 +89,12 @@ class Builder {
     const queryLastPart = query[query.length - 1]
 
     if (queryLastPart.includes('WHERE'))
-      throw new Error(
+      this[_throwError](
         `where() and whereIsNull() methods must be chained through and() or or() or use grouping methods!`,
       )
 
     if (typeof column != 'string' || column === '')
-      throw new Error('Column should be a string and not empty!')
+      this[_throwError]('Column should be a string and not empty!')
 
     if (this.operatorSignal)
       state = {
@@ -114,14 +114,14 @@ class Builder {
 
   /** @param {string[]} columns @return {this} */
   select(...columns) {
-    if (columns.length < 1) throw new Error('Column or columns, required!')
+    if (columns.length < 1) this[_throwError]('Column or columns, required!')
 
     if (
       columns.includes('') ||
       columns.includes(null) ||
       columns.includes(undefined)
     )
-      throw new Error(
+      this[_throwError](
         "List of columns can't include [empty, null or undefined] column(s) name(s)!",
       )
 
@@ -130,14 +130,14 @@ class Builder {
         query: [`SELECT ${columns.join(', ')} FROM ${this.table}`],
         values: [],
       },
-      false
+      false,
     )
   }
 
   /** @return {this}*/
   selectAll() {
     if (arguments.length > 0)
-      throw new Error('selectAll method takes none or 0 arguments!')
+      this[_throwError]('selectAll method takes none or 0 arguments!')
     return this.select('*')
   }
 
@@ -252,7 +252,7 @@ class Builder {
     const whereMethodUsed = query[query.length - 1].includes('WHERE')
 
     if (whereMethodUsed) {
-      throw new Error(
+      this[_throwError](
         '"Where" method can not be chain after another one, consider using the following methods after where (or(), and(), orWhere(), andWhere(), orGroup(cb), andGroup(cb)',
       )
     }
@@ -270,18 +270,20 @@ class Builder {
     const valueIsAnObject = value instanceof Object
 
     if (argumentsCount < 3 || argumentsCount > 3)
-      throw new Error('Where method takes 3 arguments (column,operator,value)!')
+      this[_throwError](
+        'Where method takes 3 arguments (column,operator,value)!',
+      )
 
     if (columnIsNotStringOrEmpty)
-      throw new Error('Column should be string type and not be empty')
+      this[_throwError]('Column should be string type and not be empty')
 
     if (notSupportedOperators.includes(operator))
-      throw new Error(
+      this[_throwError](
         `For the current used operator ${operator}, consider using corresponding method operator (whereIsNotNull(), whereIsNull(), whereIn(), whereNotIn())`,
       )
 
     if (operatorNotSupportedOrEmpty)
-      throw new Error(`Supported operators (${supportedOperators.join(',')})`)
+      this[_throwError](`Supported operators (${supportedOperators.join(',')})`)
 
     if (valueIsStringAndNotEmpty || valueIsBoolean || valueIsANumber)
       stateValue = value
@@ -300,7 +302,7 @@ class Builder {
       const typeKeyIsEmpty = value['type'] === ''
 
       if (valueKeyIsNotPresent)
-        throw new Error('Value key is required and must carry a valid value!')
+        this[_throwError]('Value key is required and must carry a valid value!')
 
       if (
         valueIsNullOrUndefined ||
@@ -308,10 +310,12 @@ class Builder {
         valueIsAnArray ||
         valueIsInvalidOrEmptyString
       )
-        throw new Error('Value can not be (null, undefined, {}, []) or empty!')
+        this[_throwError](
+          'Value can not be (null, undefined, {}, []) or empty!',
+        )
 
       if (typeKeyIsNotPresent || typeKeyIsNotStringType || typeKeyIsEmpty)
-        throw new Error(
+        this[_throwError](
           'Type key is required and must contain a string type as value',
         )
 
@@ -393,7 +397,7 @@ class Builder {
   /** @param {string} column @returns {this} */
   whereIsNull(column) {
     if (arguments.length < 1 || arguments.length > 1)
-      throw new Error(
+      this[_throwError](
         '"Column name" argument is the only one that is required!',
       )
     return this.#nullOrNotNull(column, 'IS NULL')
@@ -402,7 +406,7 @@ class Builder {
   /** @param {string} column @returns {this} */
   whereIsNotNull(column) {
     if (arguments.length < 1 || arguments.length > 1)
-      throw new Error(
+      this[_throwError](
         '"Column name" argument is the only one that is required!',
       )
     return this.#nullOrNotNull(column, 'IS NOT NULL')
