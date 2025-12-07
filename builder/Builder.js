@@ -1,8 +1,9 @@
-import { X509Certificate } from 'node:crypto'
 import Helper, {
   _cloneMethodSymbol as _clone,
   _throwErrorMethodSymbol as _throwError,
 } from '../helper/Helper.js'
+const _null = Symbol()
+const _between = Symbol()
 
 class Builder {
   // ---IMPLEMENTATION DETAILS ---//
@@ -83,30 +84,34 @@ class Builder {
     return this[_clone](state, true)
   }
 
-  /** @param {string} column @param {string} operator @returns {Builder} */
-  #nullOrNotNull(column, operator) {
-    let state = { query: [], values: [] }
+  /** @param {string} operator @returns {Builder} */
+  [_null](operator) {
     const { query, values } = this.state
-    const queryLastPart = query[query.length - 1]
+    const state = { query: [], values: [] }
 
-    if (queryLastPart.includes('WHERE'))
+    state.query = [...query, operator]
+    state.values = [...values]
+
+    return this[_clone](state)
+  }
+  /**
+   *
+   * @param {number} start
+   * @param {number} end
+   * @param {string} operation
+   * @returns {Builder}
+   */
+  [_between](start, end, operation) {
+    const { query, values } = this.state
+    const state = { query: [], values: [] }
+
+    if (typeof start != 'number' || typeof end != 'number')
       this[_throwError](
-        `where() and whereIsNull() methods must be chained through and() or or() or use grouping methods!`,
+        '"start" & "end" argument are required and must be of type number!',
       )
 
-    if (typeof column != 'string' || column === '')
-      this[_throwError]('Column should be a string and not empty!')
-
-    if (this.operatorSignal)
-      state = {
-        query: [...query, `${column} ${operator}`],
-        values: [...values],
-      }
-    else
-      state = {
-        query: [...query, `WHERE ${column} ${operator}`],
-        values: [...values],
-      }
+    state.query = [...query, operation]
+    state.values = [...values, start, end]
 
     return this[_clone](state)
   }
@@ -247,7 +252,7 @@ class Builder {
 
     return this[_clone](state)
   }
-  
+
   /**
    * @returns {this}
    */
@@ -486,21 +491,53 @@ class Builder {
   }
 
   /** @param {string} column @returns {this} */
-  whereIsNull(column) {
-    if (arguments.length < 1 || arguments.length > 1)
-      this[_throwError](
-        '"Column name" argument is the only one that is required!',
-      )
-    return this.#nullOrNotNull(column, 'IS NULL')
+  isNull() {
+    return this[_null]('IS NULL')
   }
 
-  /** @param {string} column @returns {this} */
-  whereIsNotNull(column) {
-    if (arguments.length < 1 || arguments.length > 1)
+  /** @returns {this} */
+  isNotNull() {
+    return this[_null]('IS NOT NULL')
+  }
+
+  /**
+   * @param {string} column
+   * @returns {this}
+   */
+
+  whereField(column) {
+    const { query, values } = this.state
+    const state = { query: [...query], values: [...values] }
+
+    if (typeof column != 'string' || column.trim() == '')
       this[_throwError](
-        '"Column name" argument is the only one that is required!',
+        '[column] argument is required & should be of type string!',
       )
-    return this.#nullOrNotNull(column, 'IS NOT NULL')
+
+    if (this.operatorSignal) 
+      state.query.push(`${column}`)
+    else 
+      state.query.push(`WHERE ${column}`)
+
+    return this[_clone](state)
+  }
+
+  /**
+   * @param {number} start
+   * @param {number} end
+   * @returns {this}
+   */
+  isBetween(start, end) {
+    return this[_between](start, end, 'BETWEEN ? AND ?')
+  }
+
+  /**
+   * @param {number} start
+   * @param {number} end
+   * @returns {this}
+   */
+  isNotBetween(start, end) {
+    return this[_between](start, end, 'NOT BETWEEN ? AND ?')
   }
 }
 

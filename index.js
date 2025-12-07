@@ -1,10 +1,10 @@
 import express from 'express'
 import dotenv from '@dotenvx/dotenvx'
 import miniORM from './miniORM.js'
-import { win32 } from 'node:path/win32'
 
 dotenv.config()
 
+const model = new miniORM()
 /**
  * miniORM Auto-closing Demo Server
  *
@@ -20,11 +20,6 @@ dotenv.config()
 console.log('🚀 Starting miniORM Auto-closing Demo Server')
 console.log('============================================')
 
-// Create multiple instances to demonstrate shared pool
-const miniORMModel = new miniORM()
-
-// miniORMModel.setTable('posts')
-
 console.log(
   '✅ Created 3 miniORM instances (all share the same connection pool)',
 )
@@ -36,14 +31,16 @@ const app = express()
 app.use(express.json())
 
 app.get('/', async (req, res) => {
-  miniORMModel.setTable(`posts`)
-
   try {
-    const results = await miniORMModel
+    const results = await model
       .fromTable(`posts`)
-      .countRecords()
-      .where(`post_likes`, `<`, 110)
-    
+      .select(`post_id`, `post_author`, `post_likes`)
+      .whereField(`post_likes`)
+      .isBetween(50, 100)
+      .or()
+      .whereField(`post_author`)
+      .in(['Imsamaritan', 'Mary Thompson', 'James', 'John Doe'])
+
     return res.json(results)
   } catch (error) {
     return res.status(400).json({ warning: error.message })
@@ -54,7 +51,7 @@ app.get('/', async (req, res) => {
 app.post('/posts', async (req, res) => {
   const { post_author, post_title, post_body, post_likes } = req.body
   try {
-    const results = await miniORMModel
+    const results = await model
       .fromTable(`posts`)
       .insert({ post_author, post_title, post_body, post_likes })
 
@@ -67,10 +64,9 @@ app.post('/posts', async (req, res) => {
 //Delete post
 app.delete('/posts/:id', async (req, res) => {
   const id = req.params.id
-  miniORMModel.setTable(`posts`)
-
   try {
     const results = await miniORMModel
+      .fromTable(`posts`)
       .delete()
       .where(`post_id`, `=`, { value: id, type: 'number' })
       .done()
