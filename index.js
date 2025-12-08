@@ -38,8 +38,12 @@ app.get('/', async (req, res) => {
       .whereField(`post_likes`)
       .isBetween(50, 100)
       .or()
-      .whereField(`post_author`)
-      .in(['Imsamaritan', 'Mary Thompson', 'James', 'John Doe'])
+      .whereIn(`post_author`, [
+        'Imsamaritan',
+        'Mary Thompson',
+        'James',
+        'John Doe',
+      ])
 
     return res.json(results)
   } catch (error) {
