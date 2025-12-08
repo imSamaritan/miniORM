@@ -261,11 +261,11 @@ class Builder {
     const state = { query: [], values: [] }
 
     if (arguments.length > 0)
-      this[_throwError]('[rowCount] method takes 0 arguments!')
+      this[_throwError]('[countRecords] method takes 0 arguments!')
 
     if (query.length > 0)
       this[_throwError](
-        '[rowCount] method should be chained first or at top level to the chain',
+        '[countRecords] method should be chained first or at top level to the chain',
       )
 
     state.query.push(`SELECT COUNT(*) AS recordsCount FROM ${this.table}`)
@@ -514,10 +514,8 @@ class Builder {
         '[column] argument is required & should be of type string!',
       )
 
-    if (this.operatorSignal) 
-      state.query.push(`${column}`)
-    else 
-      state.query.push(`WHERE ${column}`)
+    if (this.operatorSignal) state.query.push(`${column}`)
+    else state.query.push(`WHERE ${column}`)
 
     return this[_clone](state)
   }
