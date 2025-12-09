@@ -27,10 +27,8 @@ app.get('/', async (req, res) => {
   try {
     const results = await model
       .fromTable(`posts`)
-      .select(`*`)
-      .whereField(`post_id`)
-      .notIn([24, 26, 30])
-      .done()
+      .select()
+      .distinct('post_title')
 
     return res.json(results)
   } catch (error) {
