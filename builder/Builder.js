@@ -4,6 +4,7 @@ import Helper, {
 } from '../helper/Helper.js'
 const _null = Symbol()
 const _between = Symbol()
+const _inOrNotIn = Symbol()
 
 class Builder {
   // ---IMPLEMENTATION DETAILS ---//
@@ -114,6 +115,24 @@ class Builder {
     state.values = [...values, start, end]
 
     return this[_clone](state)
+  }
+
+  /**
+   * @param {Array} list
+   * @param {string} operator
+   * @returns {Builder} */
+  [_inOrNotIn](list, operator) {
+    const { query, values } = this.state
+
+    if (!Array.isArray(list) || list.length < 1)
+      this[_throwError]('List should be an array type and not empty!')
+
+    const placeholders = list.map(() => '?').join(',')
+
+    return this[_clone]({
+      query: [...query, `${operator}(${placeholders})`],
+      values: [...values, ...list],
+    })
   }
 
   // ---PUBLIC API IMPLEMENTATION DETAILS ---//
@@ -433,6 +452,25 @@ class Builder {
     return this[_clone](state, true)
   }
 
+  /**
+   * @param {string} column
+   * @returns {this}
+   */
+  whereField(column) {
+    const { query, values } = this.state
+    const state = { query: [...query], values: [...values] }
+
+    if (typeof column != 'string' || column.trim() == '')
+      this[_throwError](
+        '[column] argument is required & should be of type string!',
+      )
+
+    if (this.operatorSignal) state.query.push(`${column}`)
+    else state.query.push(`WHERE ${column}`)
+
+    return this[_clone](state)
+  }
+
   /** @return {this}*/
   or() {
     const { query, values } = this.state
@@ -485,9 +523,23 @@ class Builder {
     return this.#inOrNotIn(column, list, 'IN')
   }
 
+  /**
+   * @param {Array} list
+   * @returns {this} */
+  in(list) {
+    return this[_inOrNotIn](list, 'IN')
+  }
+
   /**@param {string} column @param {Array} list @returns {this} */
   whereNotIn(column, list) {
     return this.#inOrNotIn(column, list, 'NOT IN')
+  }
+
+  /**
+   * @param {Array} list
+   * @returns {this} */
+  notIn(list) {
+    return this[_inOrNotIn](list, 'NOT IN')
   }
 
   /** @param {string} column @returns {this} */
@@ -498,26 +550,6 @@ class Builder {
   /** @returns {this} */
   isNotNull() {
     return this[_null]('IS NOT NULL')
-  }
-
-  /**
-   * @param {string} column
-   * @returns {this}
-   */
-
-  whereField(column) {
-    const { query, values } = this.state
-    const state = { query: [...query], values: [...values] }
-
-    if (typeof column != 'string' || column.trim() == '')
-      this[_throwError](
-        '[column] argument is required & should be of type string!',
-      )
-
-    if (this.operatorSignal) state.query.push(`${column}`)
-    else state.query.push(`WHERE ${column}`)
-
-    return this[_clone](state)
   }
 
   /**

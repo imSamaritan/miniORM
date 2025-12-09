@@ -25,7 +25,12 @@ app.use(express.json())
 //Get all posts
 app.get('/', async (req, res) => {
   try {
-    const results = await model.fromTable(`posts`).select(`*`)
+    const results = await model
+      .fromTable(`posts`)
+      .select(`*`)
+      .whereField(`post_id`)
+      .notIn([24, 26, 30])
+      .done()
 
     return res.json(results)
   } catch (error) {
@@ -57,7 +62,9 @@ app.post('/posts', async (req, res) => {
       .fromTable(`posts`)
       .insert({ post_author, post_title, post_body, post_likes })
 
-    return res.status(201).json({ post_id: results.insertId, post_status: 'created' })
+    return res
+      .status(201)
+      .json({ post_id: results.insertId, post_status: 'created' })
   } catch (error) {
     res.status(400).send({ error: error.message })
   }
@@ -76,7 +83,6 @@ app.put('/posts/:id', async (req, res) => {
 
     if (results.affectedRows > 0) return res.redirect('/posts/' + id)
     else res.json({ error: `Something went wrong, post is not updated` })
-    
   } catch (error) {
     res.status(400).send({ error: error.message })
   }
@@ -91,10 +97,10 @@ app.delete('/posts/:id', async (req, res) => {
       .where(`post_id`, `=`, { value: id, type: `number` })
       .delete()
       .done()
-    
-    if (results.affectedRows > 0) return res.json({post_id: id, post_status: 'removed'})
+
+    if (results.affectedRows > 0)
+      return res.json({ post_id: id, post_status: 'removed' })
     else res.json({ error: `Something went wrong, post is not removed` })
-    
   } catch (error) {
     res.status(400).send({ error: error.message })
   }
