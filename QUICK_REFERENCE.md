@@ -2,6 +2,8 @@
 
 Quick reference for the most common operations with miniORM.
 
+**Updated:** Includes new `distinct()`, `in()`, and `notIn()` methods!
+
 ---
 
 ## 🚀 Setup
@@ -24,6 +26,24 @@ await model.fromTable('users').selectAll()
 ### Select Specific Columns
 ```javascript
 await model.fromTable('users').select('id', 'name', 'email')
+```
+
+### Select with No Arguments ✨ NEW
+```javascript
+// Used with distinct() or other modifiers
+await model.fromTable('users').select().distinct('email')
+```
+
+### Select Distinct ✨ NEW
+```javascript
+// Get unique email addresses
+await model.fromTable('users').select().distinct('email')
+
+// Get unique combinations
+await model.fromTable('orders').select().distinct('customer_id', 'product_id')
+
+// Get distinct roles
+await model.fromTable('users').select().distinct('role')
 ```
 
 ### Select with WHERE
@@ -63,6 +83,13 @@ await model.fromTable('users').countRecords()
 ```javascript
 .whereIn('role', ['admin', 'moderator', 'editor'])
 .whereNotIn('status', ['banned', 'deleted'])
+```
+
+### Field-Based IN / NOT IN ✨ NEW
+```javascript
+// More readable alternative to whereIn()
+.whereField('role').in(['admin', 'moderator', 'editor'])
+.whereField('status').notIn(['banned', 'deleted', 'suspended'])
 ```
 
 ### NULL Checks
@@ -117,6 +144,17 @@ await model.fromTable('users').countRecords()
 })
 ```
 
+### Using New in() with Groups ✨ NEW
+```javascript
+.where('status', '=', 'active')
+.andGroup((builder) => {
+  return builder
+    .whereField('role').in(['admin', 'moderator'])
+    .orWhere('department', '=', 'IT')
+})
+// WHERE status = 'active' AND (role IN ('admin', 'moderator') OR department = 'IT')
+```
+
 ---
 
 ## ✏️ INSERT
@@ -158,6 +196,15 @@ await model
   .andWhere('status', '=', 'pending')
 ```
 
+### Update Excluding Certain Values ✨ NEW
+```javascript
+await model
+  .fromTable('users')
+  .update({ last_updated: new Date() })
+  .whereField('status')
+  .notIn(['banned', 'deleted'])
+```
+
 ---
 
 ## 🗑️ DELETE
@@ -175,8 +222,17 @@ await model
 await model
   .fromTable('temp_logs')
   .delete()
-  .where('created_at', '<', '2024-01-01')
+  .where('created_at', '<', '2025-01-01')
   .andWhere('processed', '=', true)
+```
+
+### Delete Excluding Values ✨ NEW
+```javascript
+await model
+  .fromTable('sessions')
+  .delete()
+  .whereField('user_id')
+  .notIn([1, 2, 3]) // Don't delete admin sessions
 ```
 
 ---
@@ -216,6 +272,39 @@ await model.fromTable('products').select('*').limit(20).offset(40)
 ---
 
 ## 🌐 Express Integration
+
+### GET: Select Distinct ✨ NEW
+```javascript
+app.get('/unique-emails', async (req, res) => {
+  try {
+    const emails = await model
+      .fromTable('users')
+      .select()
+      .distinct('email')
+    
+    res.json(emails)
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+```
+
+### GET: Using whereField().in() ✨ NEW
+```javascript
+app.get('/posts/featured', async (req, res) => {
+  try {
+    const posts = await model
+      .fromTable('posts')
+      .select('id', 'title', 'author')
+      .whereField('author')
+      .in(['John Doe', 'Jane Smith', 'Bob Wilson'])
+    
+    res.json(posts)
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+```
 
 ### GET Endpoint
 ```javascript
@@ -271,7 +360,7 @@ app.put('/users/:id', async (req, res) => {
 })
 ```
 
-### DELETE Endpoint
+### DELETE Endpoint with Exclusions ✨ NEW
 ```javascript
 app.delete('/users/:id', async (req, res) => {
   try {
@@ -279,6 +368,11 @@ app.delete('/users/:id', async (req, res) => {
       .fromTable('users')
       .delete()
       .where('id', '=', { value: req.params.id, type: 'number' })
+      .andWhere((builder) => {
+        return builder
+          .whereField('role')
+          .notIn(['admin', 'superadmin'])
+      })
     
     res.json({ success: true, affected: result.affectedRows })
   } catch (error) {
@@ -294,8 +388,10 @@ app.delete('/users/:id', async (req, res) => {
 ```javascript
 const query = model
   .fromTable('users')
-  .select('id', 'name')
-  .where('status', '=', 'active')
+  .select()
+  .distinct('email')
+  .whereField('status')
+  .notIn(['banned', 'deleted'])
 
 // Inspect before executing
 console.log(query.state.query)  // Query parts array
@@ -356,6 +452,21 @@ const admins = await activeUsersBase.andWhere('role', '=', 'admin')
 const editors = await activeUsersBase.andWhere('role', '=', 'editor')
 ```
 
+### Get Distinct Values ✨ NEW
+```javascript
+// Get all unique departments
+const departments = await model
+  .fromTable('users')
+  .select()
+  .distinct('department')
+
+// Get unique role-department combinations
+const combos = await model
+  .fromTable('users')
+  .select()
+  .distinct('role', 'department')
+```
+
 ### Dynamic Conditions
 ```javascript
 async function getUsers(filters) {
@@ -365,8 +476,10 @@ async function getUsers(filters) {
     query = query.where('status', '=', filters.status)
   }
   
-  if (filters.role) {
-    query = query.andWhere('role', '=', filters.role)
+  if (filters.roles && filters.roles.length > 0) {
+    query = query.andWhere((builder) => {
+      return builder.whereField('role').in(filters.roles)
+    })
   }
   
   if (filters.minAge) {
@@ -375,6 +488,13 @@ async function getUsers(filters) {
   
   return await query.done()
 }
+
+// Usage
+const users = await getUsers({
+  status: 'active',
+  roles: ['admin', 'moderator'],
+  minAge: 18
+})
 ```
 
 ---
@@ -399,18 +519,39 @@ await model.fromTable('users').delete()
 .where('id', '=', req.params.id)
 ```
 
-### 3. Use Groups for Complex Logic
+### 3. Use distinct() for Unique Values ✨ NEW
+```javascript
+// ✅ Good - efficient database query
+await model.fromTable('users').select().distinct('email')
+
+// ⚠️ Less efficient - requires post-processing
+const users = await model.fromTable('users').select('email')
+const unique = [...new Set(users.map(u => u.email))]
+```
+
+### 4. Choose Between whereIn() and whereField().in() ✨ NEW
+```javascript
+// ✅ Both are valid - use what reads better
+
+// Traditional approach
+.whereIn('status', ['active', 'pending'])
+
+// New field-based approach (more readable in chains)
+.whereField('status').in(['active', 'pending'])
+```
+
+### 5. Use Groups for Complex Logic
 ```javascript
 // ✅ Clear and readable
 .where('status', '=', 'active')
 .andGroup((builder) => {
   return builder
-    .where('role', '=', 'admin')
-    .orWhere('role', '=', 'moderator')
+    .whereField('role').in(['admin', 'moderator'])
+    .orWhere('department', '=', 'IT')
 })
 ```
 
-### 4. Error Handling
+### 6. Error Handling
 ```javascript
 try {
   const users = await model.fromTable('users').selectAll()
@@ -461,6 +602,25 @@ try {
 .where('status', '=', 'active').andWhere('role', '=', 'admin').done()
 ```
 
+### distinct() Requires Columns ✨ NEW
+```javascript
+// ❌ Wrong
+.select().distinct()
+
+// ✅ Correct
+.select().distinct('email')
+.select().distinct('role', 'department')
+```
+
+### distinct() Must Follow select() ✨ NEW
+```javascript
+// ❌ Wrong
+.fromTable('users').distinct('email')
+
+// ✅ Correct
+.fromTable('users').select().distinct('email')
+```
+
 ---
 
 ## 📊 Operator Reference
@@ -488,8 +648,9 @@ try {
 - `countRecords()`
 
 ### Query Builders
-- `select()`
+- `select()` - ✨ Now supports no arguments
 - `selectAll()`
+- `distinct()` - ✨ NEW
 - `delete()`
 
 ### Conditions
@@ -505,6 +666,8 @@ try {
 - `isNotNull()`
 - `isBetween()`
 - `isNotBetween()`
+- `in()` - ✨ NEW
+- `notIn()` - ✨ NEW
 
 ### Logical
 - `and()`
@@ -522,4 +685,55 @@ try {
 
 ---
 
+## ✨ What's New in This Version
+
+### 1. `select()` with No Arguments
+```javascript
+// Now you can call select() without arguments
+model.fromTable('users').select().distinct('email')
+```
+
+### 2. `distinct()` Method
+```javascript
+// Get unique values from columns
+model.fromTable('users').select().distinct('email')
+model.fromTable('orders').select().distinct('customer_id', 'product_id')
+```
+
+### 3. `in()` Field Operator
+```javascript
+// More readable than whereIn() in complex chains
+model.fromTable('posts')
+  .select('*')
+  .whereField('author').in(['John', 'Jane'])
+```
+
+### 4. `notIn()` Field Operator
+```javascript
+// Cleaner syntax for NOT IN conditions
+model.fromTable('users')
+  .select('*')
+  .whereField('status').notIn(['banned', 'deleted'])
+```
+
+---
+
+## 📊 Complete Method List (Updated)
+
+**Total: 32 methods** (4 new additions!)
+
+- Core: `new miniORM()`, `fromTable()`, `setTable()`, `done()`, `then()`
+- Query: `select()` ✨, `distinct()` ✨, `selectAll()`, `countRecords()`, `insert()`, `update()`, `delete()`
+- WHERE: `where()`, `andWhere()`, `orWhere()`, `whereIn()`, `whereNotIn()`, `whereField()`
+- Field Ops: `isNull()`, `isNotNull()`, `isBetween()`, `isNotBetween()`, `in()` ✨, `notIn()` ✨
+- Logical: `and()`, `or()`, `andGroup()`, `orGroup()`
+- Pagination: `limit()`, `offset()`
+- Properties: `state`, `table`, `operatorSignal`
+
+---
+
 **Need more help? Check CURRENT_API_SUMMARY.md for complete documentation.**
+
+---
+
+*Last Updated: 2025 - Now with distinct() and field-based in()/notIn() support!*

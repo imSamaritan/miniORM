@@ -1,6 +1,6 @@
 # miniORM - Current API Summary
 
-**Last Updated:** 2024
+**Last Updated:** 2025
 **Purpose:** Document the current API implementation to align README and usage examples
 
 ---
@@ -107,8 +107,8 @@ const results = await model.fromTable('users').selectAll()
 
 ### 4. SELECT Operations
 
-#### `select(...columns)`
-Selects specific columns from the table.
+#### `select(...columns)` ✨ NEW: No-args support
+Selects specific columns from the table. Now supports being called without arguments for flexible query building.
 
 ```javascript
 // Single column
@@ -116,11 +116,36 @@ const names = await model.fromTable('users').select('name')
 
 // Multiple columns
 const userInfo = await model.fromTable('users').select('id', 'name', 'email')
+
+// No arguments - for use with distinct() or other modifiers
+const query = await model.fromTable('users').select().distinct('email')
 ```
 
 **Validation:**
+- Can be called with or without arguments
+- When called with arguments, no empty, null, or undefined column names allowed
+
+#### `distinct(...columns)` ✨ NEW
+Selects distinct values from specified columns. Must be chained after `select()`.
+
+```javascript
+// Get unique email addresses
+const uniqueEmails = await model
+  .fromTable('users')
+  .select()
+  .distinct('email')
+
+// Get unique combinations
+const uniqueCombos = await model
+  .fromTable('orders')
+  .select()
+  .distinct('customer_id', 'product_id')
+```
+
+**Rules:**
 - At least one column required
 - No empty, null, or undefined column names allowed
+- Must be chained after `select()`
 
 #### `selectAll()`
 Selects all columns (equivalent to `SELECT *`).
@@ -184,7 +209,7 @@ const result = await model
     status: 'inactive',
     updated_at: new Date()
   })
-  .where('last_login', '<', '2024-01-01')
+  .where('last_login', '<', '2025-01-01')
 
 // Bulk update with complex conditions
 const result = await model
@@ -396,6 +421,12 @@ await model.fromTable('products').select('*').whereField('price').isBetween(10, 
 // NOT BETWEEN
 await model.fromTable('users').select('*').whereField('age').isNotBetween(13, 17)
 
+// IN - NEW!
+await model.fromTable('posts').select('*').whereField('post_author').in(['John', 'Jane', 'Bob'])
+
+// NOT IN - NEW!
+await model.fromTable('users').select('*').whereField('status').notIn(['banned', 'deleted'])
+
 // With logical operators
 await model
   .fromTable('posts')
@@ -462,6 +493,38 @@ const users = await model
 
 **Rules:**
 - Both `start` and `end` must be numbers
+
+##### `in(list)` ✨ NEW
+Checks if field value is in the provided list. Used after `whereField()`.
+
+```javascript
+const posts = await model
+  .fromTable('posts')
+  .select('*')
+  .whereField('post_author')
+  .in(['Imsamaritan', 'Mary Thompson', 'James', 'John Doe'])
+// SQL: WHERE post_author IN ('Imsamaritan', 'Mary Thompson', 'James', 'John Doe')
+```
+
+**Rules:**
+- `list` must be a non-empty array
+- Must be chained after `whereField()`
+
+##### `notIn(list)` ✨ NEW
+Checks if field value is NOT in the provided list. Used after `whereField()`.
+
+```javascript
+const users = await model
+  .fromTable('users')
+  .select('*')
+  .whereField('status')
+  .notIn(['banned', 'deleted', 'suspended'])
+// SQL: WHERE status NOT IN ('banned', 'deleted', 'suspended')
+```
+
+**Rules:**
+- `list` must be a non-empty array
+- Must be chained after `whereField()`
 
 ---
 
@@ -639,6 +702,14 @@ model.select('*').where('id', '=', 1)
 model.fromTable('users').insert({...})
 model.fromTable('users').update({...}).where('id', '=', 1)
 model.fromTable('users').delete().where('id', '=', 1)
+
+// Pattern 4: select() with distinct() - NEW!
+model.fromTable('users').select().distinct('email')
+model.fromTable('orders').select().distinct('customer_id', 'product_id')
+
+// Pattern 5: whereField() with in()/notIn() - NEW!
+model.fromTable('posts').select('*').whereField('author').in(['John', 'Jane'])
+model.fromTable('users').select('*').whereField('status').notIn(['banned'])
 ```
 
 ### Invalid Chaining Patterns
@@ -659,6 +730,9 @@ model.select('*').fromTable('users') // Error!
 
 // ❌ insert/update cannot follow other methods
 model.select('*').insert({...}) // Error!
+
+// ❌ distinct() requires at least one column
+model.fromTable('users').select().distinct() // Error!
 ```
 
 ---
@@ -713,7 +787,21 @@ import miniORM from './miniORM.js'
 const app = express()
 const model = new miniORM()
 
-// GET: Fetch users with complex conditions
+// GET: Fetch distinct emails
+app.get('/unique-emails', async (req, res) => {
+  try {
+    const emails = await model
+      .fromTable('users')
+      .select()
+      .distinct('email')
+    
+    res.json(emails)
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+// GET: Fetch users with complex conditions using new in()
 app.get('/users', async (req, res) => {
   try {
     const users = await model
@@ -722,12 +810,28 @@ app.get('/users', async (req, res) => {
       .where('status', '=', 'active')
       .andGroup((builder) => {
         return builder
-          .where('role', '=', 'admin')
-          .orWhere('role', '=', 'moderator')
+          .whereField('role')
+          .in(['admin', 'moderator'])
+          .orWhere('department', '=', 'IT')
       })
       .limit(50)
     
     res.json(users)
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+// GET: Posts by specific authors using whereField().in()
+app.get('/posts', async (req, res) => {
+  try {
+    const posts = await model
+      .fromTable('posts')
+      .select('post_id', 'post_author', 'post_title')
+      .whereField('post_author')
+      .in(['John Doe', 'Jane Smith', 'Bob Johnson'])
+    
+    res.json(posts)
   } catch (error) {
     res.status(500).json({ error: error.message })
   }
@@ -769,13 +873,18 @@ app.put('/users/:id', async (req, res) => {
   }
 })
 
-// DELETE: Remove user
+// DELETE: Remove user excluding certain statuses
 app.delete('/users/:id', async (req, res) => {
   try {
     const result = await model
       .fromTable('users')
       .delete()
       .where('id', '=', { value: req.params.id, type: 'number' })
+      .andWhere((builder) => {
+        return builder
+          .whereField('status')
+          .notIn(['admin', 'superadmin'])
+      })
     
     res.json({ success: true, affected: result.affectedRows })
   } catch (error) {
@@ -814,7 +923,33 @@ await model
   .where('id', '=', req.params.id)
 ```
 
-### 3. Use Groups for Complex Logic
+### 3. Use distinct() for Unique Values
+```javascript
+// ✅ Good - get unique values efficiently
+await model.fromTable('users').select().distinct('email')
+
+// ⚠️ Less efficient - requires post-processing
+const users = await model.fromTable('users').select('email')
+const unique = [...new Set(users.map(u => u.email))]
+```
+
+### 4. Use whereField().in() for Cleaner Queries
+```javascript
+// ✅ Good - more readable with whereField()
+await model
+  .fromTable('posts')
+  .select('*')
+  .whereField('author')
+  .in(['John', 'Jane'])
+
+// ✅ Also good - using whereIn()
+await model
+  .fromTable('posts')
+  .select('*')
+  .whereIn('author', ['John', 'Jane'])
+```
+
+### 5. Use Groups for Complex Logic
 ```javascript
 // ✅ Good - clear intent with grouping
 await model
@@ -823,17 +958,20 @@ await model
   .where('status', '=', 'active')
   .andGroup((builder) => {
     return builder
-      .where('role', '=', 'admin')
+      .whereField('role')
+      .in(['admin', 'moderator'])
       .orWhere('department', '=', 'IT')
   })
 ```
 
-### 4. Inspect State for Debugging
+### 6. Inspect State for Debugging
 ```javascript
 const query = model
   .fromTable('users')
-  .select('*')
-  .where('status', '=', 'active')
+  .select()
+  .distinct('email')
+  .whereField('status')
+  .notIn(['banned', 'deleted'])
 
 console.log('Query parts:', query.state.query)
 console.log('Values:', query.state.values)
@@ -846,37 +984,42 @@ const results = await query.done()
 
 ## 📋 Summary of All Methods
 
-| Method | Category | Description |
-|--------|----------|-------------|
-| `new miniORM()` | Core | Constructor |
-| `fromTable()` | Core | Set table (must be first) |
-| `setTable()` | Core | Set table (internal) |
-| `done()` | Core | Execute query |
-| `select()` | Query | SELECT columns |
-| `selectAll()` | Query | SELECT * |
-| `countRecords()` | Query | COUNT(*) |
-| `insert()` | Query | INSERT record |
-| `update()` | Query | UPDATE records |
-| `delete()` | Query | DELETE records |
-| `where()` | Condition | WHERE clause |
-| `andWhere()` | Condition | AND WHERE |
-| `orWhere()` | Condition | OR WHERE |
-| `whereIn()` | Condition | WHERE IN |
-| `whereNotIn()` | Condition | WHERE NOT IN |
-| `whereField()` | Condition | Field-based WHERE |
-| `isNull()` | Field Operator | IS NULL |
-| `isNotNull()` | Field Operator | IS NOT NULL |
-| `isBetween()` | Field Operator | BETWEEN |
-| `isNotBetween()` | Field Operator | NOT BETWEEN |
-| `and()` | Logical | AND operator |
-| `or()` | Logical | OR operator |
-| `andGroup()` | Logical | AND (grouped) |
-| `orGroup()` | Logical | OR (grouped) |
-| `limit()` | Pagination | LIMIT results |
-| `offset()` | Pagination | OFFSET results |
-| `state` | Property | Query state |
-| `table` | Property | Table name |
-| `operatorSignal` | Property | Operator flag |
+| Method | Category | Description | New |
+|--------|----------|-------------|-----|
+| `new miniORM()` | Core | Constructor | |
+| `fromTable()` | Core | Set table (must be first) | |
+| `setTable()` | Core | Set table (internal) | |
+| `done()` | Core | Execute query | |
+| `select()` | Query | SELECT columns (now supports no args) | ✨ |
+| `distinct()` | Query | SELECT DISTINCT | ✨ |
+| `selectAll()` | Query | SELECT * | |
+| `countRecords()` | Query | COUNT(*) | |
+| `insert()` | Query | INSERT record | |
+| `update()` | Query | UPDATE records | |
+| `delete()` | Query | DELETE records | |
+| `where()` | Condition | WHERE clause | |
+| `andWhere()` | Condition | AND WHERE | |
+| `orWhere()` | Condition | OR WHERE | |
+| `whereIn()` | Condition | WHERE IN | |
+| `whereNotIn()` | Condition | WHERE NOT IN | |
+| `whereField()` | Condition | Field-based WHERE | |
+| `isNull()` | Field Operator | IS NULL | |
+| `isNotNull()` | Field Operator | IS NOT NULL | |
+| `isBetween()` | Field Operator | BETWEEN | |
+| `isNotBetween()` | Field Operator | NOT BETWEEN | |
+| `in()` | Field Operator | IN (after whereField) | ✨ |
+| `notIn()` | Field Operator | NOT IN (after whereField) | ✨ |
+| `and()` | Logical | AND operator | |
+| `or()` | Logical | OR operator | |
+| `andGroup()` | Logical | AND (grouped) | |
+| `orGroup()` | Logical | OR (grouped) | |
+| `limit()` | Pagination | LIMIT results | |
+| `offset()` | Pagination | OFFSET results | |
+| `state` | Property | Query state | |
+| `table` | Property | Table name | |
+| `operatorSignal` | Property | Operator flag | |
+
+**Total: 32 API members** (30 previous + 2 new field operators)
 
 ---
 
@@ -887,6 +1030,9 @@ const results = await query.done()
 - Queries are Promise-like (can await directly or use `.done()`)
 - Type casting available for string/number/boolean conversions
 - Debug mode available via `DEBUG` environment variable
+- **NEW**: `select()` can now be called without arguments for flexible query building
+- **NEW**: `distinct()` method for getting unique values
+- **NEW**: `in()` and `notIn()` as field operators after `whereField()`
 
 ---
 

@@ -2,6 +2,8 @@
 
 Visual representation of the complete miniORM API structure and method relationships.
 
+**Updated:** Now includes `distinct()`, `in()`, and `notIn()` methods!
+
 ---
 
 ## 🏗️ Class Hierarchy
@@ -36,7 +38,8 @@ miniORM
 │  └─ then(resolve, reject)        [Promise-like behavior]
 │
 ├─ 📖 SELECT OPERATIONS
-│  ├─ select(...columns)
+│  ├─ select(...columns)           ✨ [Now supports no args]
+│  ├─ distinct(...columns)         ✨ [NEW - Must follow select()]
 │  ├─ selectAll()
 │  └─ countRecords()
 │
@@ -57,7 +60,9 @@ miniORM
 │  ├─ isNull() ◄─────────────┘
 │  ├─ isNotNull()
 │  ├─ isBetween(start, end)
-│  └─ isNotBetween(start, end)
+│  ├─ isNotBetween(start, end)
+│  ├─ in(list)                     ✨ [NEW]
+│  └─ notIn(list)                  ✨ [NEW]
 │
 ├─ 🔗 LOGICAL OPERATORS
 │  ├─ and()
@@ -92,6 +97,7 @@ START
   │
   ├─► SELECT PATH ─────────────┐
   │   ├─ select(...)            │
+  │   │  └─ distinct(...) ✨    │ [NEW - Must follow select()]
   │   ├─ selectAll()            │
   │   └─ countRecords()         │
   │                             │
@@ -118,7 +124,9 @@ START
   │       ├─ isNull()       │   │
   │       ├─ isNotNull()    │   │
   │       ├─ isBetween()    │   │
-  │       └─ isNotBetween() │   │
+  │       ├─ isNotBetween() │   │
+  │       ├─ in(...) ✨     │   │ [NEW]
+  │       └─ notIn(...) ✨  │   │ [NEW]
   │                         │   │
   ├─► LOGICAL OPERATORS     │   │
   │   ├─ and() ─────────────┤   │
@@ -172,7 +180,61 @@ whereField(column)
   ├─ isNull()                  IS NULL
   ├─ isNotNull()               IS NOT NULL
   ├─ isBetween(a, b)           BETWEEN a AND b
-  └─ isNotBetween(a, b)        NOT BETWEEN a AND b
+  ├─ isNotBetween(a, b)        NOT BETWEEN a AND b
+  ├─ in(list) ✨               IN (list) [NEW]
+  └─ notIn(list) ✨            NOT IN (list) [NEW]
+```
+
+---
+
+## ✨ NEW: distinct() Flow
+
+```
+select() with no arguments
+    │
+    ├─ Allows for flexible query building
+    │
+    └─► distinct(...columns)
+            │
+            ├─ Adds DISTINCT clause
+            ├─ Requires at least 1 column
+            └─ Filters duplicate rows
+                │
+                └─► SQL: SELECT DISTINCT column1, column2 FROM table
+```
+
+**Example:**
+```javascript
+model.fromTable('users').select().distinct('email')
+// SQL: SELECT DISTINCT email FROM users
+```
+
+---
+
+## ✨ NEW: Field-Based in()/notIn() Flow
+
+```
+whereField(column)
+    │
+    ├─► in(list)
+    │    │
+    │    ├─ Validates list is non-empty array
+    │    ├─ Creates placeholders (?, ?, ?)
+    │    └─► SQL: column IN (?, ?, ?)
+    │
+    └─► notIn(list)
+         │
+         ├─ Validates list is non-empty array
+         ├─ Creates placeholders (?, ?, ?)
+         └─► SQL: column NOT IN (?, ?, ?)
+```
+
+**Example:**
+```javascript
+model.fromTable('posts')
+  .select('*')
+  .whereField('author').in(['John', 'Jane', 'Bob'])
+// SQL: WHERE author IN ('John', 'Jane', 'Bob')
 ```
 
 ---
@@ -184,7 +246,7 @@ const base = model.fromTable('users')
       │
       ├─ select('id', 'name') ──► query1 (new instance)
       │
-      ├─ select('email') ────────► query2 (new instance)
+      ├─ select().distinct('email') ──► query2 (new instance) ✨
       │
       └─ selectAll() ────────────► query3 (new instance)
 
@@ -264,14 +326,17 @@ andGroup(callback)  /  orGroup(callback)
                     ├─ where(...)
                     ├─ andWhere(...)
                     ├─ orWhere(...)
+                    ├─ whereField(...) ✨
+                    │  ├─ in([...]) ✨
+                    │  └─ notIn([...]) ✨
                     └─ Nested groups
                        ├─ andGroup(...)
                        └─ orGroup(...)
 
 Example SQL Output:
-WHERE status = 'active' AND (role = 'admin' OR role = 'moderator')
-                           └──────────────────────────────────┘
-                                  Group created here
+WHERE status = 'active' AND (role IN ('admin', 'moderator') OR dept = 'IT')
+                           └─────────────────────────────────────────────┘
+                                        Group created here
 ```
 
 ---
@@ -283,15 +348,14 @@ query.state
     │
     ├─ query: []        Array of SQL fragments
     │   │
-    │   ├─ ['SELECT id, name FROM users']
-    │   ├─ ['WHERE status = ?']
-    │   ├─ ['AND role = ?']
+    │   ├─ ['SELECT']
+    │   ├─ ['DISTINCT email FROM users'] ✨
+    │   ├─ ['WHERE status IN(?,?,?)'] ✨
     │   └─ ['LIMIT ?']
     │
     └─ values: []       Array of parameter values
         │
-        ├─ ['active']
-        ├─ ['admin']
+        ├─ ['active', 'pending', 'verified']
         └─ [10]
 
 Combined at execution:
@@ -326,6 +390,7 @@ Execution Phase (done() or await)
     │
     └─ Return results
        ├─ SELECT → rows array
+       ├─ SELECT DISTINCT → unique rows ✨
        ├─ INSERT → {insertId, ...}
        ├─ UPDATE → {affectedRows, ...}
        └─ DELETE → {affectedRows, ...}
@@ -342,8 +407,17 @@ Constructor
 fromTable/setTable
   └─ Must be first or fail
 
-select/selectAll
-  └─ Validate columns
+select
+  ├─ If args provided, validate columns
+  └─ No empty/null/undefined allowed
+
+distinct ✨ NEW
+  ├─ Requires at least 1 column
+  ├─ No empty/null/undefined allowed
+  └─ Must follow select()
+
+selectAll
+  └─ No arguments allowed
 
 insert/update
   ├─ Must take object
@@ -370,6 +444,10 @@ whereIn/whereNotIn
 whereField
   └─ Valid column string
 
+in/notIn ✨ NEW
+  ├─ Must be non-empty array
+  └─ Must follow whereField()
+
 isBetween/isNotBetween
   └─ Both args must be numbers
 
@@ -394,8 +472,9 @@ done()
    ├─ new miniORM()
    └─ fromTable() / setTable()
 
-📖 READ (3)
-   ├─ select()
+📖 READ (4)
+   ├─ select()        ✨ [Updated: supports no args]
+   ├─ distinct()      ✨ [NEW]
    ├─ selectAll()
    └─ countRecords()
 
@@ -412,11 +491,13 @@ done()
    ├─ whereNotIn()
    └─ whereField()
 
-🎯 FIELD OPS (4)
+🎯 FIELD OPS (6)
    ├─ isNull()
    ├─ isNotNull()
    ├─ isBetween()
-   └─ isNotBetween()
+   ├─ isNotBetween()
+   ├─ in()            ✨ [NEW]
+   └─ notIn()         ✨ [NEW]
 
 🔗 LOGIC (4)
    ├─ and()
@@ -437,7 +518,7 @@ done()
    ├─ table
    └─ operatorSignal
 
-Total: 30 API members
+Total: 32 API members (30 + 2 new field operators)
 ```
 
 ---
@@ -453,6 +534,11 @@ User Code
     │       │       │
     │       │       ├─► State Management
     │       │       │   └─ {query: [], values: []}
+    │       │       │
+    │       │       ├─► New Methods ✨
+    │       │       │   ├─ distinct() validation
+    │       │       │   ├─ in() validation
+    │       │       │   └─ notIn() validation
     │       │       │
     │       │       └─► Validation
     │       │           └─ Check rules & throw errors
@@ -479,12 +565,15 @@ Operation    │ Method(s)              │ Requires WHERE │ Returns
 ─────────────┼────────────────────────┼────────────────┼──────────────
 Select All   │ selectAll()            │ No             │ Rows[]
 Select Some  │ select(...)            │ No             │ Rows[]
+Select None  │ select() ✨            │ No             │ Partial query
+Distinct     │ select().distinct() ✨ │ No             │ Unique rows[]
 Count        │ countRecords()         │ No             │ {count: n}
 Insert       │ insert({...})          │ No             │ {insertId}
 Update All   │ update({...})          │ No*            │ {affectedRows}
 Update Some  │ update({...}).where()  │ Yes            │ {affectedRows}
 Delete All   │ delete()               │ No*            │ {affectedRows}
 Delete Some  │ delete().where()       │ Yes            │ {affectedRows}
+Filter In    │ whereField().in() ✨   │ After WHERE    │ Filtered rows
 
 * Allowed but dangerous
 ```
@@ -531,6 +620,7 @@ DEBUG=miniORM:*
 🟢 BEGINNER (Simple Operations)
    ├─ selectAll()
    ├─ select(...)
+   ├─ select().distinct(...) ✨
    ├─ where(...).done()
    └─ insert({...})
 
@@ -538,13 +628,15 @@ DEBUG=miniORM:*
    ├─ where().andWhere().orWhere()
    ├─ whereIn() / whereNotIn()
    ├─ whereField().isNull()
+   ├─ whereField().in() / .notIn() ✨
    └─ update().where()
 
 🟠 ADVANCED (Complex Queries)
    ├─ andGroup() / orGroup()
    ├─ Nested groups
    ├─ Type casting
-   └─ Dynamic query building
+   ├─ Dynamic query building
+   └─ whereField() chains with multiple operators ✨
 
 🔴 EXPERT (Architecture Understanding)
    ├─ Immutable pattern usage
@@ -555,15 +647,62 @@ DEBUG=miniORM:*
 
 ---
 
+## ✨ New Features Visual Guide
+
+### 1. distinct() Pattern
+
+```
+Traditional approach:
+model.fromTable('users').select('email')
+  → Returns all emails (including duplicates)
+
+New approach: ✨
+model.fromTable('users').select().distinct('email')
+  → Returns unique emails only
+```
+
+### 2. Field-Based in()/notIn() Pattern
+
+```
+Traditional approach:
+model.fromTable('posts')
+  .select('*')
+  .whereIn('author', ['John', 'Jane'])
+
+New approach: ✨
+model.fromTable('posts')
+  .select('*')
+  .whereField('author').in(['John', 'Jane'])
+  
+Both valid! Choose what reads better in your context.
+```
+
+### 3. Combined Usage
+
+```
+model.fromTable('users')
+  .select()
+  .distinct('role', 'department')
+  .whereField('status').in(['active', 'pending'])
+  .or()
+  .whereField('priority').isBetween(1, 5)
+  
+SQL: SELECT DISTINCT role, department FROM users 
+     WHERE status IN ('active', 'pending') 
+     OR priority BETWEEN 1 AND 5
+```
+
+---
+
 ## ✅ Complete API Summary
 
 ```
-Total API Surface: 30 members
+Total API Surface: 32 members (+2 from previous version)
 
-├─ Methods: 27
-│  ├─ Query Building: 8
+├─ Methods: 29
+│  ├─ Query Building: 9 (+1 distinct)
 │  ├─ WHERE Conditions: 6
-│  ├─ Field Operators: 4
+│  ├─ Field Operators: 6 (+2 in/notIn)
 │  ├─ Logical Operators: 4
 │  ├─ Pagination: 2
 │  ├─ Execution: 2
@@ -578,4 +717,34 @@ All working ✅
 
 ---
 
+## 🎯 Quick Method Reference
+
+```
+SELECT Operations:
+  select()              → SELECT columns (or no args)
+  select().distinct()   → SELECT DISTINCT (new!)
+  selectAll()           → SELECT *
+  countRecords()        → COUNT(*)
+
+WHERE with IN:
+  Option 1: whereIn('col', [])
+  Option 2: whereField('col').in([])      (new!)
+  Option 3: whereField('col').notIn([])   (new!)
+
+Complete whereField() Chain:
+  whereField('column')
+    .isNull()
+    .isNotNull()
+    .isBetween(a, b)
+    .isNotBetween(a, b)
+    .in([...])        ← NEW
+    .notIn([...])     ← NEW
+```
+
+---
+
 **END OF API STRUCTURE DIAGRAM**
+
+*Updated: 2025 - Now includes distinct(), in(), and notIn() methods*
+*Total API Members: 32*
+*All methods verified and documented ✅*

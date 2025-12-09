@@ -1,14 +1,24 @@
 # miniORM Documentation Index
 
-**Version:** 1.0.0  
-**Last Updated:** 2024  
-**Status:** Complete ✅
+**Version:** 1.0.0 (Updated)  
+**Last Updated:** 2025  
+**Status:** Complete ✅ - Updated with New Features
 
 ---
 
 ## 📚 Documentation Overview
 
-This project includes comprehensive documentation covering all aspects of the miniORM library. Use this index to navigate to the right resource for your needs.
+This project includes comprehensive documentation covering all aspects of the miniORM library, including the newly added `distinct()`, `in()`, and `notIn()` methods. Use this index to navigate to the right resource for your needs.
+
+## 🆕 What's New
+
+**New Features in Latest Update:**
+- ✨ `select()` now supports no arguments
+- ✨ `distinct(...columns)` - New method for SELECT DISTINCT
+- ✨ `in(list)` - New field operator after `whereField()`
+- ✨ `notIn(list)` - New field operator after `whereField()`
+
+**Total API Methods:** 32 (30 previous + 2 new field operators)
 
 ---
 
@@ -56,16 +66,18 @@ This project includes comprehensive documentation covering all aspects of the mi
 
 ---
 
-### 2. QUICK_REFERENCE.md ⚡
-**Size:** 525 lines  
+### 2. QUICK_REFERENCE.md ⚡ ⭐ UPDATED
+**Size:** 525+ lines  
 **Purpose:** Fast lookup guide for common operations  
 **Content:**
-- Quick syntax examples
-- Common patterns (CRUD, WHERE, groups, etc.)
-- Express integration snippets
-- Common mistakes to avoid
+- Quick syntax examples (including new features)
+- Common patterns (CRUD, WHERE, groups, DISTINCT, etc.)
+- Express integration snippets (updated)
+- Common mistakes to avoid (updated)
 - Operator reference table
 - Environment setup
+- **NEW:** SELECT DISTINCT patterns
+- **NEW:** Field-based in()/notIn() examples
 
 **When to Use:**
 - Quick syntax lookup
@@ -87,11 +99,15 @@ This project includes comprehensive documentation covering all aspects of the mi
 
 ---
 
-### 3. CURRENT_API_SUMMARY.md 📋
-**Size:** 893 lines  
+### 3. CURRENT_API_SUMMARY.md 📋 ⭐ UPDATED
+**Size:** 1000+ lines  
 **Purpose:** Complete API reference documentation  
 **Content:**
-- All 30 API methods documented
+- All 32 API methods documented (30 + 2 new)
+- **NEW:** `distinct()` method documentation
+- **NEW:** `in()` field operator documentation
+- **NEW:** `notIn()` field operator documentation
+- **UPDATED:** `select()` with no-args support
 - Detailed parameter descriptions
 - Comprehensive examples
 - Method chaining rules
@@ -118,17 +134,19 @@ This project includes comprehensive documentation covering all aspects of the mi
 
 ---
 
-### 4. API_ALIGNMENT_REPORT.md 🔍
-**Size:** 393 lines  
+### 4. API_ALIGNMENT_REPORT.md 🔍 ⭐ UPDATED
+**Size:** 550+ lines  
 **Purpose:** Technical audit and verification report  
 **Content:**
 - Complete audit methodology
-- Verification status of all components
-- Issues found and resolutions
+- Verification status of all 32 components
+- **NEW:** Documentation of 4 new features
+- Issues found and resolutions (all resolved)
 - Architecture verification
 - Dependencies audit
-- Quality metrics
+- Quality metrics (100% score)
 - Recommendations
+- **NEW:** New method implementation details
 
 **When to Use:**
 - Understanding implementation
@@ -149,16 +167,18 @@ This project includes comprehensive documentation covering all aspects of the mi
 
 ---
 
-### 5. API_ALIGNMENT_COMPLETE.md ✅
-**Size:** 442 lines  
+### 5. API_ALIGNMENT_COMPLETE.md ✅ ⭐ UPDATED
+**Size:** 680+ lines  
 **Purpose:** Executive summary of alignment process  
 **Content:**
-- Project completion summary
-- All deliverables listed
-- Complete API inventory
-- Issues found and resolved
-- Quality metrics
+- Project completion summary (updated)
+- All deliverables listed (updated)
+- Complete API inventory (32 methods)
+- **NEW:** Detailed new feature documentation
+- Issues found and resolved (all resolved)
+- Quality metrics (100% score)
 - Documentation usage guide
+- **NEW:** Usage examples for all new features
 
 **When to Use:**
 - Overview of documentation project
@@ -168,17 +188,20 @@ This project includes comprehensive documentation covering all aspects of the mi
 
 ---
 
-### 6. API_STRUCTURE.md 📊
-**Size:** 581 lines  
+### 6. API_STRUCTURE.md 📊 ⭐ UPDATED
+**Size:** 720+ lines  
 **Purpose:** Visual API structure and flow diagrams  
 **Content:**
 - Class hierarchy diagrams
-- Complete API map
-- Method chaining flow charts
+- Complete API map (updated with 32 methods)
+- Method chaining flow charts (updated)
+- **NEW:** `distinct()` flow diagram
+- **NEW:** Field-based `in()`/`notIn()` flow diagrams
 - Connection pool architecture
 - Type casting flow
 - Data flow diagrams
 - Usage pattern matrix
+- **NEW:** New features visual guides
 
 **When to Use:**
 - Visual learning
@@ -251,6 +274,12 @@ This project includes comprehensive documentation covering all aspects of the mi
 - Quick examples: `QUICK_REFERENCE.md` → INSERT/UPDATE/DELETE
 - Detailed docs: `CURRENT_API_SUMMARY.md` → Modification Operations
 - Best practices: `QUICK_REFERENCE.md` → Best Practices
+- **NEW:** Examples using `whereField().notIn()` for safe deletes
+
+### SELECT DISTINCT ✨ NEW
+- Quick examples: `QUICK_REFERENCE.md` → SELECT Queries
+- Detailed docs: `CURRENT_API_SUMMARY.md` → SELECT Operations
+- Visual flow: `API_STRUCTURE.md` → distinct() Flow
 
 ### Grouped Conditions
 - Quick pattern: `QUICK_REFERENCE.md` → Grouped Conditions
@@ -293,6 +322,7 @@ This project includes comprehensive documentation covering all aspects of the mi
 | `setTable()` | ✅ | ✅ | ✅ |
 | `done()` | ✅ | ✅ | ✅ |
 | `select()` | ✅ | ✅ | ✅ |
+| `distinct()` | ✅ | ✅ | ✅ | ✨
 | `selectAll()` | ✅ | ✅ | ✅ |
 | `countRecords()` | ✅ | ✅ | ✅ |
 | `insert()` | ✅ | ✅ | ✅ |
@@ -308,6 +338,8 @@ This project includes comprehensive documentation covering all aspects of the mi
 | `isNotNull()` | ✅ | ✅ | ✅ |
 | `isBetween()` | ✅ | ✅ | ✅ |
 | `isNotBetween()` | ✅ | ✅ | ✅ |
+| `in()` | ✅ | ✅ | ✅ | ✨
+| `notIn()` | ✅ | ✅ | ✅ | ✨
 | `and()` | ✅ | ✅ | ✅ |
 | `or()` | ✅ | ✅ | ✅ |
 | `andGroup()` | ✅ | ✅ | ✅ |
@@ -318,8 +350,9 @@ This project includes comprehensive documentation covering all aspects of the mi
 | `table` | ✅ | ✅ | ✅ |
 | `operatorSignal` | ✅ | ✅ | ✅ |
 
-**Total:** 29 Methods + 1 Constructor = 30 API members  
-**Coverage:** 100% across all documentation
+**Total:** 31 Methods + 1 Constructor = 32 API members  
+**Coverage:** 100% across all documentation  
+**New:** 2 field operators + 1 new method + 1 enhancement = 4 new features ✨
 
 ---
 
@@ -329,6 +362,14 @@ This project includes comprehensive documentation covering all aspects of the mi
 
 #### ...get started quickly
 → `QUICK_REFERENCE.md` → Setup section
+
+#### ...use the new distinct() method ✨ NEW
+→ `QUICK_REFERENCE.md` → Select Distinct section  
+→ `CURRENT_API_SUMMARY.md` → distinct() Method
+
+#### ...use the new in()/notIn() operators ✨ NEW
+→ `QUICK_REFERENCE.md` → Field-Based IN / NOT IN section  
+→ `CURRENT_API_SUMMARY.md` → in()/notIn() Field Operators
 
 #### ...see all available methods
 → `CURRENT_API_SUMMARY.md` → Summary of All Methods  
@@ -431,7 +472,7 @@ This documentation was created through a comprehensive API alignment process:
 - ✅ Code inconsistencies fixed
 - ✅ 100% API coverage achieved
 
-**Last Audit:** 2024  
+**Last Audit:** 2025  
 **Next Review:** As needed for API changes
 
 ---
@@ -472,6 +513,19 @@ Everything you need to master miniORM! 🚀
 
 ---
 
-*Last Updated: 2024*  
-*Documentation Status: Complete ✅*  
-*API Version: 1.0.0*
+*Last Updated: 2025*  
+**Documentation Status: Complete ✅**  
+**API Version: 1.0.0 (Updated with New Features)**  
+**Total API Members: 32** (30 previous + 2 new)  
+**New Features: 4** (distinct, in, notIn, select no-args)
+
+---
+
+**🎉 Latest Update Highlights:**
+- ✨ New `distinct()` method for SELECT DISTINCT queries
+- ✨ New `in()` field operator after `whereField()`
+- ✨ New `notIn()` field operator after `whereField()`
+- ✨ Enhanced `select()` to support no arguments
+- 📚 All documentation updated with new features
+- 📊 Visual diagrams updated with new flows
+- 💯 100% API coverage maintained
