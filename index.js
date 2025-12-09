@@ -17,33 +17,15 @@ const model = new miniORM()
  * - No manual .close() or .end() methods needed
  */
 
-console.log('🚀 Starting miniORM Auto-closing Demo Server')
-console.log('============================================')
-
-console.log(
-  '✅ Created 3 miniORM instances (all share the same connection pool)',
-)
-console.log('✅ Auto-closing behavior enabled - no manual cleanup required')
-
 const PORT = process.env.PORT || 3000
 const app = express()
 
 app.use(express.json())
 
+//Get all posts
 app.get('/', async (req, res) => {
   try {
-    const results = await model
-      .fromTable(`posts`)
-      .select(`post_id`, `post_author`, `post_likes`)
-      .whereField(`post_likes`)
-      .isBetween(50, 100)
-      .or()
-      .whereIn(`post_author`, [
-        'Imsamaritan',
-        'Mary Thompson',
-        'James',
-        'John Doe',
-      ])
+    const results = await model.fromTable(`posts`).select(`*`)
 
     return res.json(results)
   } catch (error) {
@@ -51,7 +33,23 @@ app.get('/', async (req, res) => {
   }
 })
 
-// Posts endpoint
+//Get single post using id
+app.get('/posts/:id', async (req, res) => {
+  const id = req.params.id
+
+  try {
+    const results = await model
+      .fromTable(`posts`)
+      .selectAll()
+      .where(`post_id`, `=`, { value: id, type: `number` })
+
+    return res.json(results)
+  } catch (error) {
+    res.status(400).send({ error: error.message })
+  }
+})
+
+// Create post
 app.post('/posts', async (req, res) => {
   const { post_author, post_title, post_body, post_likes } = req.body
   try {
@@ -59,22 +57,44 @@ app.post('/posts', async (req, res) => {
       .fromTable(`posts`)
       .insert({ post_author, post_title, post_body, post_likes })
 
-    return res.status(201).json({ post_id: results.insertId })
+    return res.status(201).json({ post_id: results.insertId, post_status: 'created' })
   } catch (error) {
     res.status(400).send({ error: error.message })
   }
 })
 
-//Delete post
+// Update post using an {id}
+app.put('/posts/:id', async (req, res) => {
+  const id = req.params.id
+  const data = req.body
+
+  try {
+    const results = await model
+      .fromTable(`posts`)
+      .update(data)
+      .where(`post_id`, `=`, { value: id, type: `number` })
+
+    if (results.affectedRows > 0) return res.redirect('/posts/' + id)
+    else res.json({ error: `Something went wrong, post is not updated` })
+    
+  } catch (error) {
+    res.status(400).send({ error: error.message })
+  }
+})
+
+// Delete post using an {id}
 app.delete('/posts/:id', async (req, res) => {
   const id = req.params.id
   try {
-    const results = await miniORMModel
+    const results = await model
       .fromTable(`posts`)
+      .where(`post_id`, `=`, { value: id, type: `number` })
       .delete()
-      .where(`post_id`, `=`, { value: id, type: 'number' })
       .done()
-    return res.send(results)
+    
+    if (results.affectedRows > 0) return res.json({post_id: id, post_status: 'removed'})
+    else res.json({ error: `Something went wrong, post is not removed` })
+    
   } catch (error) {
     res.status(400).send({ error: error.message })
   }
@@ -82,11 +102,6 @@ app.delete('/posts/:id', async (req, res) => {
 
 const server = app.listen(PORT, () => {
   console.log(`\n🌐 Server running on port ${PORT}`)
-  console.log(`📊 Available endpoints:`)
-  console.log(`   - http://localhost:${PORT}/ (posts)`)
-  console.log(`   - http://localhost:${PORT}/users`)
-  console.log(`   - http://localhost:${PORT}/categories`)
-  console.log(`   - http://localhost:${PORT}/status`)
   console.log('\n💡 Try pressing Ctrl+C to see automatic cleanup in action!')
 })
 
