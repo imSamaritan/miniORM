@@ -139,6 +139,36 @@ class Builder {
 
   /** @param {string[]} columns @return {this} */
   select(...columns) {
+    const state = { query: [], values: [] }
+
+    if (arguments.length === 0) {
+      state.query.push(`SELECT`)
+    } else {
+      if (columns.length < 1) this[_throwError]('Column or columns, required!')
+
+      if (
+        columns.includes('') ||
+        columns.includes(null) ||
+        columns.includes(undefined)
+      )
+        this[_throwError](
+          "List of columns can't include [empty, null or undefined] column(s) name(s)!",
+        )
+
+      state.query.push(`SELECT ${columns.join(', ')} FROM ${this.table}`)
+    }
+
+    return this[_clone](state, false)
+  }
+  /**
+   *
+   * @param  {string[]} columns
+   * @returns {this}
+   */
+  distinct(...columns) {
+    const { query } = this.state
+    const state = { query: [], values: [] }
+
     if (columns.length < 1) this[_throwError]('Column or columns, required!')
 
     if (
@@ -147,16 +177,11 @@ class Builder {
       columns.includes(undefined)
     )
       this[_throwError](
-        "List of columns can't include [empty, null or undefined] column(s) name(s)!",
+        "Column or a list of columns can't include [empty, null or undefined] column(s) name(s)!",
       )
 
-    return this[_clone](
-      {
-        query: [`SELECT ${columns.join(', ')} FROM ${this.table}`],
-        values: [],
-      },
-      false,
-    )
+    state.query = [...query, `DISTINCT ${columns.join(', ')} FROM ${this.table}`]
+    return this[_clone](state)
   }
 
   /** @return {this}*/
