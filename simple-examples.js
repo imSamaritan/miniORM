@@ -22,12 +22,9 @@ async function example1_BasicSelect() {
     exampleDebug('All users:', allUsers)
 
     // Select specific columns
-    const specificColumns = await model
-      .select('id', 'name', 'email')
-      .done()
+    const specificColumns = await model.select('id', 'name', 'email').done()
     console.log('✅ SELECT id, name, email FROM users')
     exampleDebug('Specific columns:', specificColumns)
-
   } catch (error) {
     console.error('❌ Error in basic select:', error.message)
   }
@@ -66,7 +63,6 @@ async function example2_WhereConditions() {
       .done()
     console.log('✅ WHERE role = "admin" OR role = "moderator"')
     exampleDebug('Privileged users:', privilegedUsers)
-
   } catch (error) {
     console.error('❌ Error in WHERE conditions:', error.message)
   }
@@ -95,7 +91,6 @@ async function example3_InConditions() {
       .done()
     console.log('✅ WHERE status NOT IN ("banned", "deleted", "suspended")')
     exampleDebug('Active users:', activeUsers)
-
   } catch (error) {
     console.error('❌ Error in IN conditions:', error.message)
   }
@@ -112,7 +107,8 @@ async function example4_NullConditions() {
     // WHERE IS NULL
     const unverifiedUsers = await model
       .select('id', 'name', 'email')
-      .whereIsNull('email_verified_at')
+      .whereField('email_verified_at')
+      .isNull()
       .done()
     console.log('✅ WHERE email_verified_at IS NULL')
     exampleDebug('Unverified users:', unverifiedUsers)
@@ -120,11 +116,11 @@ async function example4_NullConditions() {
     // WHERE IS NOT NULL
     const verifiedUsers = await model
       .select('id', 'name', 'email')
-      .whereIsNotNull('email_verified_at')
+      .whereField('email_verified_at')
+      .isNotNull()
       .done()
     console.log('✅ WHERE email_verified_at IS NOT NULL')
     exampleDebug('Verified users:', verifiedUsers)
-
   } catch (error) {
     console.error('❌ Error in NULL conditions:', error.message)
   }
@@ -148,7 +144,9 @@ async function example5_GroupedConditions() {
           .orWhere('department', '=', 'IT')
       })
       .done()
-    console.log('✅ WHERE status = "active" AND (role = "admin" OR department = "IT")')
+    console.log(
+      '✅ WHERE status = "active" AND (role = "admin" OR department = "IT")',
+    )
     exampleDebug('Complex query result:', complexQuery)
 
     // Nested groups
@@ -156,18 +154,15 @@ async function example5_GroupedConditions() {
       .select('id', 'name', 'role')
       .where('status', '=', 'active')
       .andGroup((builder) => {
-        return builder
-          .where('role', '=', 'manager')
-          .orGroup((nested) => {
-            return nested
-              .where('role', '=', 'admin')
-              .andWhere('department', '=', 'HR')
-          })
+        return builder.where('role', '=', 'manager').orGroup((nested) => {
+          return nested
+            .where('role', '=', 'admin')
+            .andWhere('department', '=', 'HR')
+        })
       })
       .done()
     console.log('✅ Nested grouped conditions')
     exampleDebug('Nested query result:', nestedQuery)
-
   } catch (error) {
     console.error('❌ Error in grouped conditions:', error.message)
   }
@@ -185,7 +180,7 @@ async function example6_UpdateOperations() {
     const updateSingle = await model
       .update({
         last_login: new Date(),
-        status: 'active'
+        status: 'active',
       })
       .where('id', '=', 1)
       .done()
@@ -196,14 +191,13 @@ async function example6_UpdateOperations() {
     const bulkUpdate = await model
       .update({
         status: 'verified',
-        verified_at: new Date()
+        verified_at: new Date(),
       })
       .where('email_verified', '=', true)
       .andWhere('status', '=', 'pending')
       .done()
     console.log('✅ Bulk update with multiple conditions')
     exampleDebug('Bulk update result:', bulkUpdate)
-
   } catch (error) {
     console.error('❌ Error in update operations:', error.message)
   }
@@ -232,7 +226,6 @@ async function example7_TypeCasting() {
       .done()
     console.log('✅ Type casting: string "true" to boolean true')
     exampleDebug('Boolean filter result:', booleanFilter)
-
   } catch (error) {
     console.error('❌ Error in type casting:', error.message)
   }
@@ -252,9 +245,7 @@ async function example8_QueryStateInspection() {
       .where('status', '=', 'active')
       .andWhere('role', '=', 'admin')
       .orGroup((builder) => {
-        return builder
-          .where('department', '=', 'IT')
-          .andWhere('level', '>', 5)
+        return builder.where('department', '=', 'IT').andWhere('level', '>', 5)
       })
 
     // Inspect the query state
@@ -266,7 +257,6 @@ async function example8_QueryStateInspection() {
     // Now execute it
     const results = await query.done()
     exampleDebug('Final query result:', results)
-
   } catch (error) {
     console.error('❌ Error in query inspection:', error.message)
   }
@@ -290,7 +280,9 @@ async function runAllExamples() {
   console.log('✅ All examples completed!')
   console.log('\n💡 To see debug output, run:')
   console.log('   DEBUG=examples:*,miniORM:* node simple-examples.js')
-  console.log('\n🔌 Connection pool will close automatically when process exits')
+  console.log(
+    '\n🔌 Connection pool will close automatically when process exits',
+  )
 }
 
 // Export individual examples for testing
@@ -302,7 +294,7 @@ export {
   example5_GroupedConditions,
   example6_UpdateOperations,
   example7_TypeCasting,
-  example8_QueryStateInspection
+  example8_QueryStateInspection,
 }
 
 // Run examples if this file is executed directly

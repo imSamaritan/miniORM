@@ -180,7 +180,10 @@ class Builder {
         "Column or a list of columns can't include [empty, null or undefined] column(s) name(s)!",
       )
 
-    state.query = [...query, `DISTINCT ${columns.join(', ')} FROM ${this.table}`]
+    state.query = [
+      ...query,
+      `DISTINCT ${columns.join(', ')} FROM ${this.table}`,
+    ]
     return this[_clone](state)
   }
 
@@ -419,7 +422,7 @@ class Builder {
 
     if (notSupportedOperators.includes(operator))
       this[_throwError](
-        `For the current used operator ${operator}, consider using corresponding method operator (whereIsNotNull(), whereIsNull(), whereIn(), whereNotIn())`,
+        `For the current used operator ${operator}, consider using corresponding method operator (isNotNull(), isNull(), whereIn(), whereNotIn(), isBetween(), isNotBetween())`,
       )
 
     if (operatorNotSupportedOrEmpty)
