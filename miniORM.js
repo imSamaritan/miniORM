@@ -127,6 +127,22 @@ class miniORM extends Builder {
   then(resolve, reject) {
     return this.done().then(resolve, reject)
   }
+
+  /**
+   * @param {function(Error): void} [reject]
+   * @returns {Promise<mysql.QueryResult>}
+   */
+  catch(reject) {
+    return this.done().catch(reject)
+  }
+
+  /**
+   * @param {function(): void} [callback]
+   * @returns {Promise<mysql.QueryResult>}
+   */
+  finally(callback) {
+    return this.done().finally(callback)
+  }
 }
 
 // Export miniORM as default
