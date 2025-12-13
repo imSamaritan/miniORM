@@ -1,8 +1,8 @@
 {
-  "name": "miniorm",
+  "name": "@miniorm-author/miniorm",
   "version": "1.0.0",
   "description": "A lightweight Object-Relational Mapping (ORM) library for Node.js with MySQL support and automatic connection pool management",
-  "main": "index.js",
+  "main": "miniORM.js",
   "scripts": {
     "dev": "clear && nodemon index",
     "test": "node simple-examples.js",
@@ -20,8 +20,28 @@
     "mysql2",
     "connection-pool"
   ],
-  "author": "",
-  "license": "ISC",
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/miniorm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/miniorm/issues"
+  },
+  "homepage": "https://github.com/yourusername/miniorm#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "files": [
+    "miniORM.js",
+    "builder/",
+    "db/",
+    "execute/",
+    "helper/",
+    "README.md",
+    "LICENSE"
+  ],
   "type": "module",
   "dependencies": {
     "@dotenvx/dotenvx": "^1.51.0",
@@ -33,7 +53,11 @@
     "@types/debug": "^4.1.12",
     "@types/express": "^5.0.3",
     "@types/node": "^24.9.1",
+    "nodemon": "^3.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "mysql2": "^3.0.0"
   }
 }

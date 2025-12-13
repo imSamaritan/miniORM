@@ -1,0 +1,56 @@
+# Development files
+node_modules/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env
+.env.*
+
+# Examples and tests
+examples/
+example-app.js
+auto-example.js
+simple-examples.js
+index.js
+
+# Documentation (keep only README.md)
+API_ALIGNMENT_COMPLETE.md
+API_ALIGNMENT_REPORT.md
+API_ALIGNMENT_SUMMARY.md
+API_CHANGELOG.md
+API_STRUCTURE.md
+API_VERIFICATION_CHECKLIST.md
+CURRENT_API_SUMMARY.md
+DOCUMENTATION_INDEX.md
+QUICK_REFERENCE.md
+README_ALIGNMENT_SUMMARY.md
+WHERE_API_PLANNING.md
+
+# Git files
+.git/
+.gitignore
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Config files
+.prettierrc
+.eslintrc*
+tsconfig.json
+
+# Lock files (optional - some prefer to exclude)
+package-lock.json
+yarn.lock
+
+# TypeScript
+*.ts
+!*.d.ts
