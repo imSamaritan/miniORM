@@ -1,19 +1,40 @@
-# miniORM
+<div align="center">
+  <img src="./assets/mysqlizer-logo.png" alt="mySQLizer Logo" width="400">
+  
+  # mySQLizer
+  
+  <p><strong>A lightweight, fluent MySQL query builder for Node.js</strong></p>
+  <p>Automatic connection pool management • Immutable builder pattern • Promise-based API</p>
+  
+  [![npm version](https://img.shields.io/npm/v/@mysqlizer/mysqlizer.svg)](https://www.npmjs.com/package/@mysqlizer/mysqlizer)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+  [![Node.js Version](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen.svg)](https://nodejs.org)
+  
+</div>
 
-A lightweight Object-Relational Mapping (ORM) library for Node.js with MySQL support and automatic connection pool management.
+---
+
+## What is mySQLizer?
+
+**mySQLizer is a MySQL query builder**, not a full-featured ORM. It provides a clean, chainable API for building and executing MySQL queries without the complexity and overhead of traditional ORMs. Perfect for developers who want more control than raw SQL strings but less abstraction than TypeORM or Sequelize.
+
+### Query Builder vs ORM
+
+- ✅ **Query Builder** (mySQLizer): Fluent API for building SQL queries, direct database interaction
+- ❌ **ORM**: Model definitions, relationships, migrations, schema management, active records
 
 ## Features
 
 - **Immutable Builder Pattern**: Each query method returns a new instance, preserving immutability
-- **Fluent Chainable API**: Readable methods like `model.fromTable('users').select('*')`
-- **SELECT DISTINCT Support**: Get unique values with the new `distinct()` method ✨
+- **Fluent Chainable API**: Readable methods like `db.fromTable('users').select('*')`
+- **SELECT DISTINCT Support**: Get unique values with the `distinct()` method ✨
 - **Field-based IN/NOT IN**: Enhanced `whereField()` with `in()` and `notIn()` operators ✨
 - **Promise-like Interface**: Await queries directly or call `.done()` explicitly
-- **Singleton Connection Pool**: Single shared pool across all miniORM instances with automatic cleanup
+- **Singleton Connection Pool**: Single shared pool across all mySQLizer instances with automatic cleanup
 - **Flexible WHERE Conditions**: Support for complex conditions with operators, IN/NOT IN, NULL checks, and BETWEEN ranges
 - **Logical Operators**: Chain conditions with AND/OR operators, `orWhere()`, `andWhere()` methods, and grouping with `andGroup()`/`orGroup()`
 - **Field-based Conditions**: Use `whereField()` for specialized operations like `isNull()`, `isBetween()`, `in()`, `notIn()`, etc.
-- **Type Casting**: Automatic type conversion for query values
+- **Type Casting**: Explicit type conversion for query values
 - **Auto Resource Management**: Connection pool automatically closes on process exit (SIGINT, SIGTERM)
 - **Debug Support**: Built-in debugging with configurable namespaces via the `debug` package
 - **ES6 Module Support**: Full ESM compatibility
@@ -40,34 +61,34 @@ CONNECTION_LIMIT=10
 ## Quick Start
 
 ```javascript
-import miniORM from './miniORM.js'
+import mySQLizer from './mySQLizer.js'
 
-const model = new miniORM()
+const db = new mySQLizer()
 
 // Select all users (can await directly without .done())
-const allUsers = await model.fromTable('users').selectAll()
+const allUsers = await db.fromTable('users').selectAll()
 
 // Select specific columns with WHERE condition
-const activeUsers = await model
+const activeUsers = await db
   .fromTable('users')
   .select('id', 'name', 'email')
   .where('status', '=', 'active')
 
 // NEW: Get unique values with distinct()
-const uniqueEmails = await model
+const uniqueEmails = await db
   .fromTable('users')
   .select()
   .distinct('email')
 
 // NEW: Use whereField().in() for cleaner syntax
-const featuredPosts = await model
+const featuredPosts = await db
   .fromTable('posts')
   .select('*')
   .whereField('author')
   .in(['John Doe', 'Jane Smith', 'Bob Wilson'])
 
 // Insert a new user
-const insertResult = await model
+const insertResult = await db
   .fromTable('users')
   .insert({
     name: 'John Doe',
@@ -76,14 +97,14 @@ const insertResult = await model
   })
 
 // Complex conditions with AND/OR
-const adminUsers = await model
+const adminUsers = await db
   .fromTable('users')
   .select('id', 'name')
   .where('status', '=', 'active')
   .andWhere('role', '=', 'admin')
 
 // Using grouped conditions with new in() operator
-const complexUsers = await model
+const complexUsers = await db
   .fromTable('users')
   .select('id', 'name', 'role')
   .where('status', '=', 'active')
@@ -94,7 +115,7 @@ const complexUsers = await model
   })
 
 // Update records
-const updateResult = await model
+const updateResult = await db
   .fromTable('users')
   .update({ status: 'inactive', updated_at: new Date() })
   .where('last_login', '<', '2025-01-01')
@@ -114,17 +135,17 @@ const updateResult = await model
 
 ```javascript
 // Get unique departments
-await model.fromTable('users').select().distinct('department')
+await db.fromTable('users').select().distinct('department')
 
 // Filter by multiple authors (more readable)
-await model
+await db
   .fromTable('posts')
   .select('*')
   .whereField('author')
   .in(['John', 'Jane', 'Bob'])
 
 // Exclude banned users
-await model
+await db
   .fromTable('users')
   .select('*')
   .whereField('status')
@@ -135,15 +156,15 @@ await model
 
 ### Core Methods
 
-#### `new miniORM(options?)`
-Create a new miniORM instance with optional database configuration.
+#### `new mySQLizer(options?)`
+Create a new mySQLizer instance with optional database configuration.
 
 ```javascript
 // Use environment variables
-const model = new miniORM()
+const db = new mySQLizer()
 
 // Override with custom options
-const model = new miniORM({
+const db = new mySQLizer({
   host: 'custom-host',
   user: 'custom-user',
   password: 'custom-password',
@@ -157,26 +178,26 @@ const model = new miniORM({
 Sets the table and returns a new instance. Must be called first in the chain.
 
 ```javascript
-const users = await model.fromTable('users').selectAll()
-const posts = await model.fromTable('posts').select('id', 'title')
+const users = await db.fromTable('users').selectAll()
+const posts = await db.fromTable('posts').select('id', 'title')
 ```
 
 #### `setTable(tableName)`
-Internal method to set the table name. Used with persistent model instances.
+Internal method to set the table name. Used with persistent query builder instances.
 
 ```javascript
-model.setTable('users')
-const all = await model.selectAll().done()
-const active = await model.select('id', 'name').where('status', '=', 'active').done()
+db.setTable('users')
+const all = await db.selectAll().done()
+const active = await db.select('id', 'name').where('status', '=', 'active').done()
 ```
 
 #### `done()`
 Executes the query and returns results. Queries can also be awaited directly without calling `.done()`.
 
 ```javascript
-const results = await model.fromTable('users').selectAll().done()
+const results = await db.fromTable('users').selectAll().done()
 // Or simply:
-const results = await model.fromTable('users').selectAll()
+const results = await db.fromTable('users').selectAll()
 ```
 
 ---
@@ -188,13 +209,13 @@ Selects specific columns from the table. Now supports being called without argum
 
 ```javascript
 // Single column
-const names = await model.fromTable('users').select('name')
+const names = await db.fromTable('users').select('name')
 
 // Multiple columns
-const userInfo = await model.fromTable('users').select('id', 'name', 'email')
+const userInfo = await db.fromTable('users').select('id', 'name', 'email')
 
 // No arguments (for use with distinct() or other modifiers)
-const query = await model.fromTable('users').select().distinct('email')
+const query = await db.fromTable('users').select().distinct('email')
 ```
 
 #### `distinct(...columns)` ✨ NEW
@@ -202,19 +223,19 @@ Returns unique values from specified columns. Must be chained after `select()`.
 
 ```javascript
 // Get unique email addresses
-const uniqueEmails = await model
+const uniqueEmails = await db
   .fromTable('users')
   .select()
   .distinct('email')
 
 // Get unique combinations
-const uniqueCombos = await model
+const uniqueCombos = await db
   .fromTable('orders')
   .select()
   .distinct('customer_id', 'product_id')
 
 // With WHERE conditions
-const activeDepts = await model
+const activeDepts = await db
   .fromTable('users')
   .select()
   .distinct('department')
@@ -230,14 +251,14 @@ const activeDepts = await model
 Selects all columns (equivalent to `SELECT *`).
 
 ```javascript
-const allUsers = await model.fromTable('users').selectAll()
+const allUsers = await db.fromTable('users').selectAll()
 ```
 
 #### `countRecords()`
 Returns the count of records in the table.
 
 ```javascript
-const count = await model.fromTable('users').countRecords()
+const count = await db.fromTable('users').countRecords()
 // Returns: [{ recordsCount: 42 }]
 ```
 
@@ -245,7 +266,7 @@ const count = await model.fromTable('users').countRecords()
 Inserts a new record into the table.
 
 ```javascript
-const result = await model
+const result = await db
   .fromTable('users')
   .insert({
     name: 'John Doe',
@@ -262,7 +283,7 @@ Updates records in the table.
 
 ```javascript
 // Update with WHERE condition
-const result = await model
+const result = await db
   .fromTable('users')
   .update({
     status: 'inactive',
@@ -271,7 +292,7 @@ const result = await model
   .where('last_login', '<', '2025-01-01')
 
 // Bulk update with complex conditions
-const result = await model
+const result = await db
   .fromTable('users')
   .update({ view_count: 0 })
   .where('status', '=', 'archived')
@@ -283,13 +304,13 @@ Deletes records from the table.
 
 ```javascript
 // Delete with WHERE condition
-const result = await model
+const result = await db
   .fromTable('users')
   .delete()
   .where('status', '=', 'banned')
 
 // Delete excluding certain values (using new notIn())
-const result = await model
+const result = await db
   .fromTable('sessions')
   .delete()
   .whereField('user_id')
@@ -300,7 +321,7 @@ const result = await model
 Limits the number of results returned.
 
 ```javascript
-const topTen = await model
+const topTen = await db
   .fromTable('products')
   .select('*')
   .where('in_stock', '=', true)
@@ -312,7 +333,7 @@ Skips a specified number of results. Must be chained after `limit()`.
 
 ```javascript
 // Get page 3 (assuming 20 items per page)
-const page3 = await model
+const page3 = await db
   .fromTable('products')
   .select('*')
   .limit(20)
@@ -328,18 +349,18 @@ Primary WHERE clause method. Supports multiple operators and type casting.
 
 ```javascript
 // Basic usage
-await model.fromTable('users').select('*').where('status', '=', 'active')
+await db.fromTable('users').select('*').where('status', '=', 'active')
 
 // With comparison operators
-await model.fromTable('products').select('*').where('price', '>', 100)
-await model.fromTable('users').select('*').where('age', '>=', 18)
+await db.fromTable('products').select('*').where('price', '>', 100)
+await db.fromTable('users').select('*').where('age', '>=', 18)
 
 // With LIKE operator
-await model.fromTable('users').select('*').where('name', 'LIKE', '%John%')
+await db.fromTable('users').select('*').where('name', 'LIKE', '%John%')
 
 // With type casting
-await model.fromTable('users').select('*').where('age', '>', { value: '18', type: 'number' })
-await model.fromTable('users').select('*').where('is_verified', '=', { value: 'true', type: 'boolean' })
+await db.fromTable('users').select('*').where('age', '>', { value: '18', type: 'number' })
+await db.fromTable('users').select('*').where('is_verified', '=', { value: 'true', type: 'boolean' })
 ```
 
 **Supported Operators:**
@@ -357,7 +378,7 @@ Pass value as object with `value` and `type` properties:
 Adds an AND condition to the query.
 
 ```javascript
-const activeAdmins = await model
+const activeAdmins = await db
   .fromTable('users')
   .select('id', 'name')
   .where('status', '=', 'active')
@@ -369,7 +390,7 @@ const activeAdmins = await model
 Adds an OR condition to the query.
 
 ```javascript
-const privilegedUsers = await model
+const privilegedUsers = await db
   .fromTable('users')
   .select('id', 'name', 'role')
   .where('role', '=', 'admin')
@@ -381,7 +402,7 @@ const privilegedUsers = await model
 Checks if column value is in the provided list.
 
 ```javascript
-const privilegedUsers = await model
+const privilegedUsers = await db
   .fromTable('users')
   .select('id', 'name', 'role')
   .whereIn('role', ['admin', 'moderator', 'editor'])
@@ -392,7 +413,7 @@ const privilegedUsers = await model
 Checks if column value is NOT in the provided list.
 
 ```javascript
-const activeUsers = await model
+const activeUsers = await db
   .fromTable('users')
   .select('id', 'name', 'status')
   .whereNotIn('status', ['banned', 'deleted', 'suspended'])
@@ -404,22 +425,22 @@ Initiates a field-based condition chain. Must be followed by field operators.
 
 ```javascript
 // Check for NULL
-await model.fromTable('users').select('*').whereField('email_verified_at').isNull()
+await db.fromTable('users').select('*').whereField('email_verified_at').isNull()
 
 // Check for NOT NULL
-await model.fromTable('users').select('*').whereField('deleted_at').isNotNull()
+await db.fromTable('users').select('*').whereField('deleted_at').isNotNull()
 
 // BETWEEN
-await model.fromTable('products').select('*').whereField('price').isBetween(10, 100)
+await db.fromTable('products').select('*').whereField('price').isBetween(10, 100)
 
 // NOT BETWEEN
-await model.fromTable('users').select('*').whereField('age').isNotBetween(13, 17)
+await db.fromTable('users').select('*').whereField('age').isNotBetween(13, 17)
 
 // IN - NEW!
-await model.fromTable('posts').select('*').whereField('author').in(['John', 'Jane', 'Bob'])
+await db.fromTable('posts').select('*').whereField('author').in(['John', 'Jane', 'Bob'])
 
 // NOT IN - NEW!
-await model.fromTable('users').select('*').whereField('status').notIn(['banned', 'deleted'])
+await db.fromTable('users').select('*').whereField('status').notIn(['banned', 'deleted'])
 ```
 
 ---
@@ -430,7 +451,7 @@ await model.fromTable('users').select('*').whereField('status').notIn(['banned',
 Checks if field is NULL.
 
 ```javascript
-const unverifiedUsers = await model
+const unverifiedUsers = await db
   .fromTable('users')
   .select('id', 'name')
   .whereField('email_verified_at')
@@ -442,7 +463,7 @@ const unverifiedUsers = await model
 Checks if field is NOT NULL.
 
 ```javascript
-const verifiedUsers = await model
+const verifiedUsers = await db
   .fromTable('users')
   .select('id', 'name')
   .whereField('email_verified_at')
@@ -454,7 +475,7 @@ const verifiedUsers = await model
 Checks if field value is between two numbers.
 
 ```javascript
-const products = await model
+const products = await db
   .fromTable('products')
   .select('*')
   .whereField('price')
@@ -466,7 +487,7 @@ const products = await model
 Checks if field value is NOT between two numbers.
 
 ```javascript
-const users = await model
+const users = await db
   .fromTable('users')
   .select('*')
   .whereField('age')
@@ -478,7 +499,7 @@ const users = await model
 Checks if field value is in the provided list. More readable alternative to `whereIn()` in complex chains.
 
 ```javascript
-const posts = await model
+const posts = await db
   .fromTable('posts')
   .select('*')
   .whereField('author')
@@ -486,7 +507,7 @@ const posts = await model
 // SQL: WHERE author IN ('John Doe', 'Jane Smith', 'Bob Wilson')
 
 // In complex chains
-const results = await model
+const results = await db
   .fromTable('users')
   .select('*')
   .whereField('role').in(['admin', 'moderator'])
@@ -502,7 +523,7 @@ const results = await model
 Checks if field value is NOT in the provided list.
 
 ```javascript
-const users = await model
+const users = await db
   .fromTable('users')
   .select('*')
   .whereField('status')
@@ -510,7 +531,7 @@ const users = await model
 // SQL: WHERE status NOT IN ('banned', 'deleted', 'suspended')
 
 // Safe DELETE operations
-const result = await model
+const result = await db
   .fromTable('sessions')
   .delete()
   .whereField('user_id')
@@ -529,7 +550,7 @@ const result = await model
 Adds AND logical operator.
 
 ```javascript
-const users = await model
+const users = await db
   .fromTable('users')
   .select('*')
   .where('status', '=', 'active')
@@ -541,7 +562,7 @@ const users = await model
 Adds OR logical operator.
 
 ```javascript
-const users = await model
+const users = await db
   .fromTable('users')
   .select('*')
   .where('status', '=', 'active')
@@ -553,7 +574,7 @@ const users = await model
 Creates an AND grouped condition using a callback.
 
 ```javascript
-const users = await model
+const users = await db
   .fromTable('users')
   .select('id', 'name', 'role', 'department')
   .where('status', '=', 'active')
@@ -569,7 +590,7 @@ const users = await model
 Creates an OR grouped condition using a callback.
 
 ```javascript
-const users = await model
+const users = await db
   .fromTable('users')
   .select('id', 'name')
   .where('status', '=', 'banned')
@@ -589,7 +610,7 @@ const users = await model
 Returns the current query state (query parts and values).
 
 ```javascript
-const query = model
+const query = db
   .fromTable('users')
   .select('id', 'name')
   .where('status', '=', 'active')
@@ -605,7 +626,7 @@ console.log(query.state)
 Returns the current table name.
 
 ```javascript
-const query = model.fromTable('users')
+const query = db.fromTable('users')
 console.log(query.table) // 'users'
 ```
 
@@ -613,7 +634,7 @@ console.log(query.table) // 'users'
 Returns the current operator signal flag (internal state).
 
 ```javascript
-const query = model.fromTable('users').where('id', '=', 1)
+const query = db.fromTable('users').where('id', '=', 1)
 console.log(query.operatorSignal) // true
 ```
 
@@ -625,17 +646,17 @@ console.log(query.operatorSignal) // true
 
 ```javascript
 import express from 'express'
-import miniORM from './miniORM.js'
+import mySQLizer from './mySQLizer.js'
 
 const app = express()
-const model = new miniORM()
+const db = new mySQLizer()
 
 app.use(express.json())
 
 // GET: Fetch unique categories
 app.get('/categories', async (req, res) => {
   try {
-    const categories = await model
+    const categories = await db
       .fromTable('products')
       .select()
       .distinct('category')
@@ -649,7 +670,7 @@ app.get('/categories', async (req, res) => {
 // GET: Fetch posts by featured authors
 app.get('/posts/featured', async (req, res) => {
   try {
-    const posts = await model
+    const posts = await db
       .fromTable('posts')
       .select('id', 'title', 'author', 'created_at')
       .whereField('author')
@@ -665,7 +686,7 @@ app.get('/posts/featured', async (req, res) => {
 // GET: Fetch active users (excluding banned)
 app.get('/users', async (req, res) => {
   try {
-    const users = await model
+    const users = await db
       .fromTable('users')
       .select('id', 'name', 'email', 'role')
       .whereField('status')
@@ -681,7 +702,7 @@ app.get('/users', async (req, res) => {
 // POST: Create new user
 app.post('/users', async (req, res) => {
   try {
-    const result = await model
+    const result = await db
       .fromTable('users')
       .insert({
         name: req.body.name,
@@ -699,7 +720,7 @@ app.post('/users', async (req, res) => {
 // PUT: Update user
 app.put('/users/:id', async (req, res) => {
   try {
-    const result = await model
+    const result = await db
       .fromTable('users')
       .update({
         name: req.body.name,
@@ -717,11 +738,11 @@ app.put('/users/:id', async (req, res) => {
 // DELETE: Remove user (protecting admins)
 app.delete('/users/:id', async (req, res) => {
   try {
-    const result = await model
+    const result = await db
       .fromTable('users')
       .delete()
       .where('id', '=', { value: req.params.id, type: 'number' })
-      .andWhere((builder) => {
+      .andGroup((builder) => {
         return builder
           .whereField('role')
           .notIn(['admin', 'superadmin'])
@@ -747,7 +768,7 @@ app.listen(3000, () => {
 ```javascript
 try {
   // Invalid: empty column name
-  await model.fromTable('users').select('')
+  await db.fromTable('users').select('')
 } catch (error) {
   console.error(error.message)
   // "List of columns can't include [empty, null or undefined] column(s) name(s)!"
@@ -755,7 +776,7 @@ try {
 
 try {
   // Invalid: distinct() without columns
-  await model.fromTable('users').select().distinct()
+  await db.fromTable('users').select().distinct()
 } catch (error) {
   console.error(error.message)
   // "Column or columns, required!"
@@ -763,7 +784,7 @@ try {
 
 try {
   // Invalid: distinct() without select()
-  await model.fromTable('users').distinct('email')
+  await db.fromTable('users').distinct('email')
 } catch (error) {
   console.error(error.message)
   // Error about method positioning
@@ -775,7 +796,7 @@ try {
 ```javascript
 try {
   // Invalid: chaining where() after where()
-  await model
+  await db
     .fromTable('users')
     .select('*')
     .where('status', '=', 'active')
@@ -787,7 +808,7 @@ try {
 
 try {
   // Invalid: in() with empty array
-  await model
+  await db
     .fromTable('users')
     .select('*')
     .whereField('role')
@@ -799,7 +820,7 @@ try {
 
 try {
   // Invalid: in() without whereField()
-  await model
+  await db
     .fromTable('users')
     .select('*')
     .in(['admin', 'moderator']) // Wrong!
@@ -816,23 +837,23 @@ try {
 Enable debug logging using the `DEBUG` environment variable:
 
 ```bash
-# Debug all miniORM operations
-DEBUG=miniORM:* node app.js
+# Debug all mySQLizer operations
+DEBUG=mySQLizer:* node app.js
 
 # Debug only queries
-DEBUG=miniORM:query node app.js
+DEBUG=mySQLizer:query node app.js
 
 # Debug only database connections
-DEBUG=miniORM:db node app.js
+DEBUG=mySQLizer:db node app.js
 
 # Debug multiple namespaces
-DEBUG=miniORM:*,examples:* node app.js
+DEBUG=mySQLizer:*,app:* node app.js
 ```
 
 **Available Debug Namespaces:**
-- `miniORM:query` - SQL queries and values
-- `miniORM:db` - Connection pool events
-- `miniORM:options` - Configuration options
+- `mySQLizer:query` - SQL queries and values
+- `mySQLizer:db` - Connection pool events
+- `mySQLizer:options` - Configuration options
 
 ---
 
@@ -840,7 +861,7 @@ DEBUG=miniORM:*,examples:* node app.js
 
 ### Automatic Features
 
-- **Singleton Pattern**: All miniORM instances share the same connection pool
+- **Singleton Pattern**: All mySQLizer instances share the same connection pool
 - **Auto-cleanup**: Pool automatically closes on process exit (SIGINT, SIGTERM)
 - **No Manual Cleanup**: No need to call `.close()` or `.end()` methods
 
@@ -854,7 +875,7 @@ Example:
 
 ```javascript
 // This configuration takes precedence over .env variables
-const model = new miniORM({
+const db = new mySQLizer({
   host: 'production-db.example.com',
   user: 'prod_user',
   password: 'prod_password',
@@ -871,22 +892,22 @@ const model = new miniORM({
 
 ```javascript
 // ✅ Good - specific deletion
-await model.fromTable('users').delete().where('id', '=', 1)
+await db.fromTable('users').delete().where('id', '=', 1)
 
 // ⚠️ Dangerous - deletes all records!
-await model.fromTable('users').delete()
+await db.fromTable('users').delete()
 ```
 
 ### 2. Use Type Casting for User Input
 
 ```javascript
 // ✅ Good - ensures type safety
-await model
+await db
   .fromTable('users')
   .where('id', '=', { value: req.params.id, type: 'number' })
 
 // ⚠️ Risky - might cause type mismatch
-await model
+await db
   .fromTable('users')
   .where('id', '=', req.params.id)
 ```
@@ -895,10 +916,10 @@ await model
 
 ```javascript
 // ✅ Good - efficient database query
-await model.fromTable('users').select().distinct('email')
+await db.fromTable('users').select().distinct('email')
 
 // ⚠️ Less efficient - requires post-processing
-const users = await model.fromTable('users').select('email')
+const users = await db.fromTable('users').select('email')
 const unique = [...new Set(users.map(u => u.email))]
 ```
 
@@ -918,7 +939,7 @@ const unique = [...new Set(users.map(u => u.email))]
 
 ```javascript
 // ✅ Good - clear intent with grouping
-await model
+await db
   .fromTable('users')
   .select('*')
   .where('status', '=', 'active')
@@ -933,11 +954,11 @@ await model
 
 ```javascript
 // ✅ Good - protects admin accounts
-await model
+await db
   .fromTable('users')
   .delete()
   .where('last_login', '<', '2024-01-01')
-  .andWhere((builder) => {
+  .andGroup((builder) => {
     return builder
       .whereField('role')
       .notIn(['admin', 'superadmin'])
@@ -952,50 +973,50 @@ await model
 
 ```javascript
 // Pattern 1: fromTable → query method → conditions
-model.fromTable('users').select('*').where('id', '=', 1)
+db.fromTable('users').select('*').where('id', '=', 1)
 
 // Pattern 2: setTable → query method → conditions
-model.setTable('users')
-model.select('*').where('id', '=', 1)
+db.setTable('users')
+db.select('*').where('id', '=', 1)
 
 // Pattern 3: Insert/Update/Delete first
-model.fromTable('users').insert({...})
-model.fromTable('users').update({...}).where('id', '=', 1)
-model.fromTable('users').delete().where('id', '=', 1)
+db.fromTable('users').insert({...})
+db.fromTable('users').update({...}).where('id', '=', 1)
+db.fromTable('users').delete().where('id', '=', 1)
 
 // Pattern 4: select() with distinct() ✨ NEW
-model.fromTable('users').select().distinct('email')
-model.fromTable('orders').select().distinct('customer_id', 'product_id')
+db.fromTable('users').select().distinct('email')
+db.fromTable('orders').select().distinct('customer_id', 'product_id')
 
 // Pattern 5: whereField() with in()/notIn() ✨ NEW
-model.fromTable('posts').select('*').whereField('author').in(['John', 'Jane'])
-model.fromTable('users').select('*').whereField('status').notIn(['banned'])
+db.fromTable('posts').select('*').whereField('author').in(['John', 'Jane'])
+db.fromTable('users').select('*').whereField('status').notIn(['banned'])
 ```
 
 ### Invalid Patterns ❌
 
 ```javascript
 // ❌ Cannot chain where() after where()
-model.fromTable('users').select('*').where('id', '=', 1).where('status', '=', 'active')
+db.fromTable('users').select('*').where('id', '=', 1).where('status', '=', 'active')
 // Use andWhere() or orWhere() instead
 
 // ❌ Cannot use offset() without limit()
-model.select('*').offset(20)
+db.select('*').offset(20)
 
 // ❌ fromTable() must be first
-model.select('*').fromTable('users')
+db.select('*').fromTable('users')
 
 // ❌ Cannot end query with and()/or()
-model.fromTable('users').select('*').where('id', '=', 1).and().done()
+db.fromTable('users').select('*').where('id', '=', 1).and().done()
 
 // ❌ distinct() requires columns
-model.fromTable('users').select().distinct()
+db.fromTable('users').select().distinct()
 
 // ❌ distinct() requires select()
-model.fromTable('users').distinct('email')
+db.fromTable('users').distinct('email')
 
 // ❌ in()/notIn() require whereField()
-model.fromTable('users').select('*').in(['admin'])
+db.fromTable('users').select('*').in(['admin'])
 ```
 
 ---
@@ -1004,7 +1025,7 @@ model.fromTable('users').select('*').in(['admin'])
 
 | Method | Category | Description | New |
 |--------|----------|-------------|-----|
-| `new miniORM()` | Core | Constructor | |
+| `new mySQLizer()` | Core | Constructor | |
 | `fromTable()` | Core | Set table (must be first) | |
 | `setTable()` | Core | Set table (internal) | |
 | `done()` | Core | Execute query | |
@@ -1036,3 +1057,23 @@ model.fromTable('users').select('*').in(['admin'])
 | `state` | Property | Query state | |
 | `table` | Property | Table name | |
 | `operatorSignal` | Property | Operator flag | |
+
+---
+
+## License
+
+MIT
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Support
+
+- 📖 [Documentation](README.md)
+- 🐛 [Report Issues](https://github.com/yourusername/mysqlizer/issues)
+- 💬 [Discussions](https://github.com/yourusername/mysqlizer/discussions)
+
+---
+
+**mySQLizer** - Simple, fluent MySQL query building for Node.js
