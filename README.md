@@ -6,7 +6,8 @@
   <p><strong>A lightweight, fluent MySQL query builder for Node.js</strong></p>
   <p>Automatic connection pool management • Immutable builder pattern • Promise-based API</p>
   
-  [![npm version](https://img.shields.io/npm/v/@mysqlizer/mysqlizer.svg)](https://www.npmjs.com/package/@mysqlizer/mysqlizer)
+  [![npm version](https://badge.fury.io/js/mysqlizer.svg)](https://www.npmjs.com/package/mysqlizer)
+  [![npm downloads](https://img.shields.io/npm/dm/mysqlizer.svg)](https://www.npmjs.com/package/mysqlizer)
   [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
   [![Node.js Version](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen.svg)](https://nodejs.org)
   
@@ -41,11 +42,39 @@
 
 ## Installation
 
+### NPM Package
+
+Install mySQLizer v1.0.0 from npm:
+
 ```bash
-npm install mysql2 debug @dotenvx/dotenvx
+npm install mysqlizer
 ```
 
-## Environment Setup
+**What's included:**
+- ✅ mySQLizer query builder core
+- ✅ mysql2 (MySQL driver with promise support)
+- ✅ debug (debugging utility)
+- ✅ @dotenvx/dotenvx (environment variable management)
+
+### Alternative: Install with specific dependencies
+
+If you prefer to manage dependencies separately:
+
+```bash
+npm install mysqlizer mysql2 debug @dotenvx/dotenvx
+```
+
+**Note:** `mysql2` is a peer dependency and is required for mySQLizer to work.
+
+## Getting Started
+
+### Step 1: Install the package
+
+```bash
+npm install mysqlizer
+```
+
+### Step 2: Set up your environment variables
 
 Create a `.env` file in your project root with your database configuration:
 
@@ -58,10 +87,68 @@ DB_PORT=3306
 CONNECTION_LIMIT=10
 ```
 
-## Quick Start
+### Step 3: Import and use mySQLizer
 
 ```javascript
-import mySQLizer from './mySQLizer.js'
+import mySQLizer from 'mysqlizer'
+
+// Create a new instance (uses environment variables automatically)
+const db = new mySQLizer()
+
+// Start building queries!
+const users = await db
+  .fromTable('users')
+  .selectAll()
+  .where('status', '=', 'active')
+```
+
+### Step 4: Optional - Custom configuration
+
+Override environment variables with custom options:
+
+```javascript
+const db = new mySQLizer({
+  host: 'custom-host.com',
+  user: 'custom-user',
+  password: 'custom-password',
+  database: 'custom-database',
+  port: 3306,
+  connectionLimit: 20
+})
+```
+
+### Step 5: Verify installation
+
+Test your setup with a simple query:
+
+```javascript
+import mySQLizer from 'mysqlizer'
+
+const db = new mySQLizer()
+
+// Test connection and query
+try {
+  const result = await db
+    .fromTable('users')
+    .countRecords()
+  
+  console.log('✅ mySQLizer connected successfully!')
+  console.log('Total users:', result[0].recordsCount)
+} catch (error) {
+  console.error('❌ Connection failed:', error.message)
+}
+```
+
+**Troubleshooting:**
+- Ensure MySQL server is running
+- Verify database credentials in `.env`
+- Check that the database and table exist
+- Confirm `mysql2` is installed: `npm list mysql2`
+
+## Quick Start Examples
+
+```javascript
+import mySQLizer from 'mysqlizer'
 
 const db = new mySQLizer()
 
@@ -646,7 +733,7 @@ console.log(query.operatorSignal) // true
 
 ```javascript
 import express from 'express'
-import mySQLizer from './mySQLizer.js'
+import mySQLizer from 'mysqlizer'
 
 const app = express()
 const db = new mySQLizer()
@@ -1060,6 +1147,31 @@ db.fromTable('users').select('*').in(['admin'])
 
 ---
 
+## NPM Package
+
+**Package Name:** `mysqlizer`  
+**Current Version:** 1.0.0  
+**Install:** `npm install mysqlizer`
+
+### Package Links
+
+- 📦 [NPM Package](https://www.npmjs.com/package/mysqlizer)
+- 📖 [Full Documentation](https://github.com/yourusername/mysqlizer#readme)
+- 🐛 [Report Issues](https://github.com/yourusername/mysqlizer/issues)
+- 💬 [Discussions](https://github.com/yourusername/mysqlizer/discussions)
+
+### Version History
+
+- **v1.0.0** (2025) - Initial release
+  - Fluent query builder API
+  - SELECT DISTINCT support
+  - Field-based IN/NOT IN operators
+  - Immutable builder pattern
+  - Automatic connection pool management
+  - Promise-based interface
+
+---
+
 ## License
 
 MIT
@@ -1068,12 +1180,10 @@ MIT
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## Support
-
-- 📖 [Documentation](README.md)
-- 🐛 [Report Issues](https://github.com/yourusername/mysqlizer/issues)
-- 💬 [Discussions](https://github.com/yourusername/mysqlizer/discussions)
-
 ---
 
 **mySQLizer** - Simple, fluent MySQL query building for Node.js
+
+<div align="center">
+  <sub>Built with ❤️ for developers who love SQL</sub>
+</div>
