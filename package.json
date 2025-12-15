@@ -1,40 +1,42 @@
 {
-  "name": "@miniorm-author/miniorm",
+  "name": "@mysqlizer/mysqlizer",
   "version": "1.0.0",
-  "description": "A lightweight Object-Relational Mapping (ORM) library for Node.js with MySQL support and automatic connection pool management",
-  "main": "miniORM.js",
+  "description": "A lightweight, fluent MySQL query builder for Node.js with automatic connection pool management and immutable builder pattern",
+  "main": "mySQLizer.js",
   "scripts": {
     "dev": "clear && nodemon index",
     "test": "node simple-examples.js",
-    "test:debug": "DEBUG=examples:*,miniORM:* node simple-examples.js",
+    "test:debug": "DEBUG=examples:*,mySQLizer:* node simple-examples.js",
     "example": "node auto-example.js",
-    "query": "set DEBUG=miniORM:query",
+    "query": "set DEBUG=mySQLizer:query",
     "reset": "set DEBUG="
   },
   "keywords": [
-    "orm",
     "mysql",
-    "database",
     "query-builder",
+    "database",
+    "sql",
     "nodejs",
     "mysql2",
-    "connection-pool"
+    "connection-pool",
+    "fluent-api",
+    "builder-pattern"
   ],
   "author": "Your Name <your.email@example.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/miniorm.git"
+    "url": "https://github.com/yourusername/mysqlizer.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/miniorm/issues"
+    "url": "https://github.com/yourusername/mysqlizer/issues"
   },
-  "homepage": "https://github.com/yourusername/miniorm#readme",
+  "homepage": "https://github.com/yourusername/mysqlizer#readme",
   "engines": {
     "node": ">=14.0.0"
   },
   "files": [
-    "miniORM.js",
+    "mySQLizer.js",
     "builder/",
     "db/",
     "execute/",

@@ -1,18 +1,18 @@
 import express from 'express'
 import dotenv from '@dotenvx/dotenvx'
-import miniORM from './miniORM.js'
+import mySQLizer from './mySQLizer.js'
 
 dotenv.config()
 
-const model = new miniORM()
+const db = new mySQLizer()
 /**
- * miniORM Auto-closing Demo Server
+ * mySQLizer Auto-closing Demo Server
  *
- * This example demonstrates how miniORM automatically handles
+ * This example demonstrates how mySQLizer automatically handles
  * connection pool lifecycle without requiring manual cleanup.
  *
  * Features demonstrated:
- * - Multiple model instances sharing the same connection pool
+ * - Multiple db instances sharing the same connection pool
  * - Automatic cleanup on server shutdown (Ctrl+C)
  * - No manual .close() or .end() methods needed
  */
@@ -25,10 +25,7 @@ app.use(express.json())
 //Get all posts
 app.get('/', async (req, res) => {
   try {
-    const results = await model
-      .fromTable(`posts`)
-      .select()
-      .distinct('post_title')
+    const results = await db.fromTable(`posts`).select(`*`).done()
 
     return res.json(results)
   } catch (error) {
@@ -41,7 +38,7 @@ app.get('/posts/:id', async (req, res) => {
   const id = req.params.id
 
   try {
-    const results = await model
+    const results = await db
       .fromTable(`posts`)
       .selectAll()
       .where(`post_id`, `=`, { value: id, type: `number` })
@@ -56,7 +53,7 @@ app.get('/posts/:id', async (req, res) => {
 app.post('/posts', async (req, res) => {
   const { post_author, post_title, post_body, post_likes } = req.body
   try {
-    const results = await model
+    const results = await db
       .fromTable(`posts`)
       .insert({ post_author, post_title, post_body, post_likes })
 
@@ -74,7 +71,7 @@ app.put('/posts/:id', async (req, res) => {
   const data = req.body
 
   try {
-    const results = await model
+    const results = await db
       .fromTable(`posts`)
       .update(data)
       .where(`post_id`, `=`, { value: id, type: `number` })
@@ -90,7 +87,7 @@ app.put('/posts/:id', async (req, res) => {
 app.delete('/posts/:id', async (req, res) => {
   const id = req.params.id
   try {
-    const results = await model
+    const results = await db
       .fromTable(`posts`)
       .where(`post_id`, `=`, { value: id, type: `number` })
       .delete()

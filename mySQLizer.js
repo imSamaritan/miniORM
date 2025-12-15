@@ -7,9 +7,9 @@ import {
   _throwErrorMethodSymbol as _throwError,
 } from './helper/Helper.js'
 
-const queryDebugger = debug('miniORM:query')
+const queryDebugger = debug('mySQLizer:query')
 
-class miniORM extends Builder {
+class mySQLizer extends Builder {
   #options
   #state
   #isOperator
@@ -52,7 +52,7 @@ class miniORM extends Builder {
    * @param {boolean} isOperator
    * @param {string} executeMethod
    *
-   * @return {miniORM}
+   * @return {mySQLizer}
    */
   [_clone](
     state,
@@ -145,5 +145,5 @@ class miniORM extends Builder {
   }
 }
 
-// Export miniORM as default
-export default miniORM
+// Export mySQLizer as default
+export default mySQLizer
