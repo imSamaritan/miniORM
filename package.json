@@ -26,12 +26,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/mysqlizer.git"
+    "url": "https://github.com/imSamaritan/mySQLizer.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/mysqlizer/issues"
+    "url": "https://github.com/imSamaritan/mySQLizer/issues"
   },
-  "homepage": "https://github.com/yourusername/mysqlizer#readme",
+  "homepage": "https://github.com/imSamaritan/mySQLizer#readme",
   "engines": {
     "node": ">=14.0.0"
   },
