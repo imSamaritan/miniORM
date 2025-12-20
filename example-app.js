@@ -1,6 +1,6 @@
 import express from 'express'
 import dotenv from '@dotenvx/dotenvx'
-import miniORM from './miniORM.js'
+import mySQLizer from './mySQLizer.js'
 import debug from 'debug'
 
 dotenv.config()
@@ -20,8 +20,8 @@ class ExampleApp {
   setupRoutes() {
     app.get('/', async (req, res) => {
       try {
-        // Users create their own miniORM instances
-        const model = new miniORM()
+        // Users create their own mySQLizer instances
+        const model = new mySQLizer()
         model.setTable('posts')
 
         const results = await model
@@ -38,7 +38,7 @@ class ExampleApp {
 
     app.get('/all-posts', async (req, res) => {
       try {
-        const model = new miniORM()
+        const model = new mySQLizer()
         model.setTable('posts')
 
         const results = await model.selectAll().done()
@@ -97,7 +97,7 @@ class ExampleApp {
       appDebug('')
       appDebug('To test graceful shutdown: Press Ctrl+C')
       appDebug(
-        'To see debug output: DEBUG=example:*,miniORM:* node example-app.js',
+        'To see debug output: DEBUG=example:*,mySQLizer:* node example-app.js',
       )
     })
   }

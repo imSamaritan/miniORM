@@ -1,104 +1,155 @@
-# NPM Publishing Guide for miniORM
+# NPM Publishing Guide for mySQLizer
 
-This guide will walk you through the process of publishing miniORM to npm.
+**Package:** mySQLizer  
+**Current Version:** 1.1.0  
+**Package Name:** mysqlizer
 
-## Prerequisites
+This guide will walk you through publishing mySQLizer to npm with proper logo display on both GitHub and npm.
+
+---
+
+## 📋 Prerequisites
 
 Before publishing, ensure you have:
 
 1. **Node.js and npm installed**
    ```bash
-   node --version
+   node --version  # Should be >= 14.0.0
    npm --version
    ```
 
 2. **An npm account**
-   - If you don't have one, create it at [npmjs.com](https://www.npmjs.com/signup)
+   - Create at [npmjs.com/signup](https://www.npmjs.com/signup)
+   - Verify your email address
 
-3. **Verified email address** on npm
-   - Check your npm profile settings to ensure your email is verified
+3. **GitHub repository (for logo display)**
+   - Logo must be accessible via GitHub raw URL
+   - Repository should be public
 
-## Pre-Publishing Checklist
+---
 
-### 1. Update Package Information
+## 🔧 Pre-Publishing Setup
 
-Before publishing, update the following fields in `package.json`:
+### Step 1: Update GitHub Repository URL
+
+**IMPORTANT:** Update `package.json` with your actual GitHub username/organization:
 
 ```json
 {
-  "author": "Your Name <your.email@example.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/miniorm.git"
+    "url": "https://github.com/YOURUSERNAME/mysqlizer.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/miniorm/issues"
+    "url": "https://github.com/YOURUSERNAME/mysqlizer/issues"
   },
-  "homepage": "https://github.com/yourusername/miniorm#readme"
+  "homepage": "https://github.com/YOURUSERNAME/mysqlizer#readme"
 }
 ```
 
-**Note:** If you don't have a GitHub repository yet, you can either:
-- Create one and push your code
-- Or remove the `repository`, `bugs`, and `homepage` fields (not recommended)
+Replace `YOURUSERNAME` with your actual GitHub username.
 
-### 2. Check Package Name Availability
+### Step 2: Update README Logo URL
 
-The name `miniorm` might already be taken on npm. Check availability:
+In `README.md`, update the logo URLs (lines 3-5):
 
-```bash
-npm search miniorm
+```markdown
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/YOURUSERNAME/mysqlizer/main/assets/mysqlizer-logo.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/YOURUSERNAME/mysqlizer/main/assets/mysqlizer-logo.png">
+  <img alt="mySQLizer Logo" src="./assets/mysqlizer-logo.png" width="400">
+</picture>
 ```
 
-If taken, consider alternatives:
-- `@yourusername/miniorm` (scoped package)
-- `mini-orm-mysql`
-- `miniorm-mysql`
-- `lightweight-mysql-orm`
+Replace `YOURUSERNAME` with your actual GitHub username.
 
-To use a scoped package, update `package.json`:
+**Note:** The `<picture>` element provides:
+- Absolute GitHub URLs for npm display
+- Relative path fallback for local/GitHub display
+- Dark/light mode support
+
+### Step 3: Update Author Information
+
+Update `package.json`:
+
 ```json
 {
-  "name": "@yourusername/miniorm"
+  "author": "Your Name <your.email@example.com>"
 }
 ```
 
-### 3. Test Your Package Locally
+### Step 4: Push to GitHub
 
-Before publishing, test the package locally:
+Ensure your code is pushed to GitHub:
 
 ```bash
-# Run tests
-npm test
+# Initialize git (if not already done)
+git init
 
-# Test the build
+# Add all files
+git add .
+
+# Commit
+git commit -m "Prepare mySQLizer v1.1.0 for npm publishing"
+
+# Add remote (replace with your URL)
+git remote add origin https://github.com/YOURUSERNAME/mysqlizer.git
+
+# Push to main branch
+git push -u origin main
+
+# Verify logo is accessible
+# Visit: https://raw.githubusercontent.com/YOURUSERNAME/mysqlizer/main/assets/mysqlizer-logo.png
+```
+
+**Verify the logo loads:** Open the raw GitHub URL in your browser to ensure the logo is accessible.
+
+---
+
+## ✅ Pre-Publishing Checklist
+
+Before publishing, verify:
+
+- [ ] GitHub repository exists and is public
+- [ ] Logo file exists at `assets/mysqlizer-logo.png`
+- [ ] Logo is accessible via GitHub raw URL
+- [ ] `package.json` has correct GitHub URLs
+- [ ] `README.md` has correct logo URLs
+- [ ] Author information is updated
+- [ ] Version is set to 1.1.0
+- [ ] `assets/` folder is included in `files` array
+
+Check what will be published:
+
+```bash
+# See files that will be included
+npm pack --dry-run
+
+# Create a test package
 npm pack
 ```
 
-This creates a `.tgz` file showing exactly what will be published. Extract and review it:
+This creates `mysqlizer-1.1.0.tgz`. Extract and verify:
+
 ```bash
-tar -xzf miniorm-1.0.0.tgz
+tar -xzf mysqlizer-1.1.0.tgz
 cd package
 ls -la
 ```
 
-### 4. Review Files to be Published
+Verify these files are present:
+- ✅ `mySQLizer.js`
+- ✅ `README.md`
+- ✅ `LICENSE`
+- ✅ `assets/mysqlizer-logo.png`
+- ✅ `builder/` directory
+- ✅ `db/` directory
+- ✅ `execute/` directory
+- ✅ `helper/` directory
 
-The `files` field in `package.json` controls what gets published:
+---
 
-```json
-"files": [
-  "miniORM.js",
-  "builder/",
-  "db/",
-  "execute/",
-  "helper/",
-  "README.md",
-  "LICENSE"
-]
-```
-
-## Publishing Steps
+## 📦 Publishing to npm
 
 ### Step 1: Login to npm
 
@@ -106,99 +157,142 @@ The `files` field in `package.json` controls what gets published:
 npm login
 ```
 
-You'll be prompted for:
+Enter:
 - Username
 - Password
 - Email
-- One-time password (if 2FA is enabled)
+- OTP (if 2FA enabled)
 
-Verify you're logged in:
+Verify login:
 ```bash
 npm whoami
 ```
 
-### Step 2: Dry Run (Optional but Recommended)
+### Step 2: Check Package Name
 
-See what will be published without actually publishing:
+Verify `mysqlizer` is available (or if you've already published):
+
+```bash
+npm view mysqlizer
+```
+
+If the name is taken and not yours, consider:
+- `@yourusername/mysqlizer` (scoped package)
+- Contact npm support if you have rights to the name
+
+### Step 3: Test Locally
+
+Run tests before publishing:
+
+```bash
+npm test
+```
+
+### Step 4: Dry Run
+
+See what will be published:
 
 ```bash
 npm publish --dry-run
 ```
 
-This shows:
-- Package name and version
-- Files that will be included
+Review the output carefully:
+- Package name: `mysqlizer`
+- Version: `1.1.0`
+- Files included (should show assets folder)
 - Package size
 
-### Step 3: Publish to npm
+### Step 5: Publish
 
-For a public package (free):
 ```bash
 npm publish
 ```
 
-For a scoped package (if using @username/miniorm):
+For scoped packages (if using @username/mysqlizer):
 ```bash
 npm publish --access public
 ```
 
-### Step 4: Verify Publication
+---
 
-After publishing, verify:
+## ✅ Post-Publishing Verification
 
-1. Visit your package page: `https://www.npmjs.com/package/miniorm`
-2. Try installing it:
-   ```bash
-   mkdir test-install
-   cd test-install
-   npm init -y
-   npm install miniorm
-   ```
+### Step 1: Verify on npm
 
-## Post-Publishing
+1. Visit: https://www.npmjs.com/package/mysqlizer
+2. Check that the logo displays correctly
+3. Verify README formatting
+4. Check package details
 
-### 1. Add Badges to README
+### Step 2: Test Installation
 
-Add npm badges to your README.md:
+```bash
+# Create test directory
+mkdir test-mysqlizer
+cd test-mysqlizer
+
+# Initialize and install
+npm init -y
+npm install mysqlizer
+
+# Test import
+node -e "import('mysqlizer').then(() => console.log('✅ Package works!'))"
+```
+
+### Step 3: Create Git Tag
+
+Tag the release:
+
+```bash
+git tag -a v1.1.0 -m "Release mySQLizer v1.1.0"
+git push origin v1.1.0
+git push --tags
+```
+
+### Step 4: Create GitHub Release
+
+1. Go to: https://github.com/YOURUSERNAME/mysqlizer/releases
+2. Click "Create a new release"
+3. Select tag: `v1.1.0`
+4. Release title: `mySQLizer v1.1.0`
+5. Add release notes:
 
 ```markdown
-[![npm version](https://img.shields.io/npm/v/miniorm.svg)](https://www.npmjs.com/package/miniorm)
-[![npm downloads](https://img.shields.io/npm/dm/miniorm.svg)](https://www.npmjs.com/package/miniorm)
-[![license](https://img.shields.io/npm/l/miniorm.svg)](https://github.com/yourusername/miniorm/blob/main/LICENSE)
+## mySQLizer v1.1.0
+
+### ✨ What's New
+- Improved README with better logo display
+- Enhanced npm package configuration
+- Logo now displays on both GitHub and npm
+
+### 📦 Installation
+```bash
+npm install mysqlizer
 ```
 
-### 2. Create a Git Tag
-
-Tag your release:
-```bash
-git tag -a v1.0.0 -m "Release version 1.0.0"
-git push origin v1.0.0
+### 🔗 Links
+- [npm Package](https://www.npmjs.com/package/mysqlizer)
+- [Documentation](https://github.com/YOURUSERNAME/mysqlizer#readme)
 ```
 
-### 3. Create a GitHub Release
+6. Publish release
 
-If using GitHub, create a release:
-1. Go to your repository
-2. Click "Releases" → "Create a new release"
-3. Select the tag you just created
-4. Add release notes
+---
 
-## Updating Your Package
+## 🔄 Updating the Package
 
-When you need to publish updates:
+For future updates:
 
-### 1. Update Version Number
-
-Use npm's version command:
+### Update Version
 
 ```bash
-# For bug fixes (1.0.0 → 1.0.1)
+# For bug fixes (1.1.0 → 1.1.1)
 npm version patch
 
-# For new features (1.0.0 → 1.1.0)
+# For new features (1.1.0 → 1.2.0)
 npm version minor
 
-# For breaking changes (1.0.0 → 2.0.0)
+# For breaking changes (1.1.0 → 2.0.0)
 npm version major
 ```
 
@@ -207,123 +301,299 @@ This automatically:
 - Creates a git commit
 - Creates a git tag
 
-### 2. Push Changes
+### Update Changelog
 
-```bash
-git push
-git push --tags
+Create/update `CHANGELOG.md`:
+
+```markdown
+## [1.1.1] - 2025-XX-XX
+### Fixed
+- Bug fix description
+
+### Added
+- New feature description
 ```
 
-### 3. Publish Update
+### Publish Update
 
 ```bash
+# Push changes
+git push
+git push --tags
+
+# Publish to npm
 npm publish
 ```
 
-## Common Issues and Solutions
+---
 
-### Issue: "You do not have permission to publish"
+## 🐛 Troubleshooting
 
-**Solution:** The package name is already taken. Choose a different name or use a scoped package.
+### Logo Not Displaying on npm
 
-### Issue: "Package name too similar to existing package"
-
-**Solution:** npm might block names similar to popular packages. Choose a more unique name.
-
-### Issue: "npm ERR! 403 Forbidden"
+**Problem:** Logo shows broken image on npm
 
 **Solutions:**
-- Ensure you're logged in: `npm whoami`
-- Check if 2FA is enabled on your account
-- Verify email address is confirmed
+1. Verify GitHub repository is public
+2. Check logo URL in browser: `https://raw.githubusercontent.com/YOURUSERNAME/mysqlizer/main/assets/mysqlizer-logo.png`
+3. Wait 5-10 minutes for npm CDN to update
+4. Ensure `assets/` is in the `files` array in package.json
+5. Republish with version bump if needed
 
-### Issue: "Missing README"
+### "Cannot publish over existing version"
 
-**Solution:** npm requires a README.md file. Ensure it exists in your project root.
+**Solution:** Increment version:
+```bash
+npm version patch
+npm publish
+```
 
-### Issue: Main file not found
+### "You do not have permission to publish"
 
-**Solution:** Ensure the `main` field in `package.json` points to the correct file:
+**Solutions:**
+- Package name is taken by someone else
+- Use scoped package: `@yourusername/mysqlizer`
+- Contact npm support if you own the name
+
+### "403 Forbidden"
+
+**Solutions:**
+- Verify login: `npm whoami`
+- Re-login: `npm logout && npm login`
+- Check 2FA is properly configured
+- Verify email is confirmed on npm
+
+### Missing Files in Package
+
+**Problem:** Files not included after publishing
+
+**Solution:** Check `files` array in `package.json`:
 ```json
 {
-  "main": "miniORM.js"
+  "files": [
+    "mySQLizer.js",
+    "builder/",
+    "db/",
+    "execute/",
+    "helper/",
+    "assets/",
+    "README.md",
+    "LICENSE"
+  ]
 }
 ```
 
-## Security Best Practices
+### Logo Path Issues
 
-1. **Enable 2FA on npm**
-   ```bash
-   npm profile enable-2fa auth-and-writes
-   ```
+**Problem:** Logo works locally but not on npm
 
-2. **Never commit sensitive data**
-   - API keys
-   - Database credentials
-   - `.env` files
+**Solution:** Use absolute GitHub URLs in README:
+```markdown
+<img src="https://raw.githubusercontent.com/YOURUSERNAME/mysqlizer/main/assets/mysqlizer-logo.png" width="400">
+```
 
-3. **Review `.npmignore`**
-   - Ensure test files, examples, and development files are excluded
+---
 
-4. **Use npm audit**
-   ```bash
-   npm audit
-   npm audit fix
-   ```
+## 🔒 Security Best Practices
 
-## Unpublishing (Emergency Only)
-
-If you need to unpublish within 72 hours:
+### Enable Two-Factor Authentication
 
 ```bash
-npm unpublish miniorm@1.0.0
+npm profile enable-2fa auth-and-writes
+```
+
+### Review What Gets Published
+
+Create `.npmignore` to exclude files:
+
+```
+# .npmignore
+node_modules/
+.env
+.env.*
+*.log
+.DS_Store
+.vscode/
+.idea/
+test/
+tests/
+examples/
+*.test.js
+.git/
+.github/
+coverage/
+.nyc_output/
+```
+
+### Audit Dependencies
+
+```bash
+npm audit
+npm audit fix
+```
+
+### Use npm Automation Tokens
+
+For CI/CD:
+```bash
+npm token create --read-only
+```
+
+---
+
+## 📊 Package Maintenance
+
+### Monitor Downloads
+
+Check package statistics:
+- npm website: https://www.npmjs.com/package/mysqlizer
+- npm trends: https://npmtrends.com/mysqlizer
+
+### Deprecate Old Versions
+
+If a version has issues:
+```bash
+npm deprecate mysqlizer@1.0.0 "Please upgrade to 1.1.0 or later"
+```
+
+### Unpublish (Emergency Only)
+
+Within 72 hours of publishing:
+```bash
+npm unpublish mysqlizer@1.1.0
 ```
 
 **Warning:** 
-- Only works within 72 hours of publishing
-- You cannot republish the same version
-- Unpublishing is permanent
-- Use deprecation instead when possible:
-  ```bash
-  npm deprecate miniorm@1.0.0 "Use version 1.0.1 instead"
-  ```
+- Only use in emergencies (security issues, leaked secrets)
+- Cannot republish same version
+- Breaks dependent projects
+- Prefer deprecation instead
 
-## Useful Commands
+---
+
+## 📝 Useful Commands
 
 ```bash
 # View package info
-npm view miniorm
+npm view mysqlizer
 
 # View all versions
-npm view miniorm versions
+npm view mysqlizer versions
 
-# Check what files will be published
-npm pack --dry-run
+# View latest version
+npm view mysqlizer version
 
 # See package details
-npm show miniorm
+npm info mysqlizer
 
 # List your published packages
 npm access ls-packages
 
-# Check outdated dependencies
-npm outdated
+# View package on npm
+npm docs mysqlizer
+
+# Check package size
+npm pack --dry-run
+
+# View package files
+npm pack && tar -tzf mysqlizer-1.1.0.tgz
+
+# Search npm registry
+npm search mysqlizer
+
+# View download stats (requires npm-stat package)
+npx npm-stat mysqlizer
 ```
-
-## Resources
-
-- [npm Documentation](https://docs.npmjs.com/)
-- [npm Package Publishing Guide](https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-registry)
-- [Semantic Versioning](https://semver.org/)
-- [npm CLI Documentation](https://docs.npmjs.com/cli/v8/commands/npm-publish)
-
-## Need Help?
-
-If you encounter issues:
-1. Check [npm status](https://status.npmjs.org/)
-2. Review [npm support](https://www.npmjs.com/support)
-3. Ask in the npm [community forum](https://github.com/npm/feedback)
 
 ---
 
-**Good luck with your npm package! 🚀**
+## 📚 Resources
+
+- [npm Documentation](https://docs.npmjs.com/)
+- [Publishing Packages](https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-registry)
+- [Semantic Versioning](https://semver.org/)
+- [npm CLI Reference](https://docs.npmjs.com/cli/v8/commands/npm-publish)
+- [package.json Guide](https://docs.npmjs.com/cli/v8/configuring-npm/package-json)
+- [npm Blog](https://blog.npmjs.org/)
+
+---
+
+## 🎯 Quick Checklist for v1.1.0
+
+Before running `npm publish`, verify:
+
+- [ ] Version in package.json is `1.1.0`
+- [ ] GitHub repository URL is updated with your username
+- [ ] README logo URL is updated with your username
+- [ ] Author information is correct
+- [ ] `assets/` folder is in the `files` array
+- [ ] Code is pushed to GitHub
+- [ ] Logo is accessible via GitHub raw URL
+- [ ] Tests pass (`npm test`)
+- [ ] Dry run looks good (`npm publish --dry-run`)
+- [ ] Logged into npm (`npm whoami`)
+- [ ] 2FA is enabled on npm account
+
+---
+
+## 🚀 Quick Publishing Commands
+
+```bash
+# 1. Update GitHub URLs in package.json and README.md
+
+# 2. Push to GitHub
+git add .
+git commit -m "Prepare v1.1.0 for npm publishing"
+git push
+
+# 3. Verify logo URL
+# Open: https://raw.githubusercontent.com/YOURUSERNAME/mysqlizer/main/assets/mysqlizer-logo.png
+
+# 4. Test package
+npm pack --dry-run
+
+# 5. Login to npm
+npm login
+
+# 6. Dry run
+npm publish --dry-run
+
+# 7. Publish
+npm publish
+
+# 8. Create git tag
+git tag -a v1.1.0 -m "Release v1.1.0"
+git push --tags
+
+# 9. Verify on npm
+# Visit: https://www.npmjs.com/package/mysqlizer
+
+# 10. Test installation
+npm install mysqlizer
+```
+
+---
+
+## 💡 Tips for Success
+
+1. **Always test locally first** - Use `npm pack` and install the .tgz file
+2. **Use semantic versioning** - Follow semver.org guidelines
+3. **Write good release notes** - Help users understand what changed
+4. **Keep README updated** - First impression matters
+5. **Respond to issues** - Build trust with users
+6. **Monitor security** - Run `npm audit` regularly
+7. **Use automation** - Consider GitHub Actions for publishing
+8. **Document breaking changes** - Be clear about migration paths
+9. **Maintain changelog** - Track all changes over time
+10. **Engage community** - Welcome contributions and feedback
+
+---
+
+**Ready to publish mySQLizer v1.1.0! 🎉**
+
+For questions or issues, check:
+- [npm Support](https://www.npmjs.com/support)
+- [npm Community Forum](https://github.com/npm/feedback)
+- [npm Status](https://status.npmjs.org/)
+
+Good luck with your npm package! 🚀

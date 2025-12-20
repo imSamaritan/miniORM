@@ -1,8 +1,8 @@
 import mysql from 'mysql2/promise'
 import debug from 'debug'
 
-const dbDebug = debug('miniORM:db')
-const optionsDebug = debug('miniORM:options')
+const dbDebug = debug('mySQLizer:db')
+const optionsDebug = debug('mySQLizer:options')
 
 /**
  * @type {mysql.Pool|null} pool

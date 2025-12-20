@@ -1,16 +1,22 @@
 <div align="center">
-  <img src="./assets/mysqlizer-logo.png" alt="mySQLizer Logo" width="400">
-  
-  # mySQLizer
-  
-  <p><strong>A lightweight, fluent MySQL query builder for Node.js</strong></p>
-  <p>Automatic connection pool management • Immutable builder pattern • Promise-based API</p>
-  
-  [![npm version](https://badge.fury.io/js/mysqlizer.svg)](https://www.npmjs.com/package/mysqlizer)
-  [![npm downloads](https://img.shields.io/npm/dm/mysqlizer.svg)](https://www.npmjs.com/package/mysqlizer)
-  [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-  [![Node.js Version](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen.svg)](https://nodejs.org)
-  
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yourusername/mysqlizer/main/assets/mysqlizer-logo.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/yourusername/mysqlizer/main/assets/mysqlizer-logo.png">
+  <img alt="mySQLizer Logo" src="./assets/mysqlizer-logo.png" width="400">
+</picture>
+
+# mySQLizer
+
+**A lightweight, fluent MySQL query builder for Node.js**
+
+Automatic connection pool management • Immutable builder pattern • Promise-based API
+
+[![npm version](https://badge.fury.io/js/mysqlizer.svg)](https://www.npmjs.com/package/mysqlizer)
+[![npm downloads](https://img.shields.io/npm/dm/mysqlizer.svg)](https://www.npmjs.com/package/mysqlizer)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D14.0.0-brightgreen.svg)](https://nodejs.org)
+
 </div>
 
 ---

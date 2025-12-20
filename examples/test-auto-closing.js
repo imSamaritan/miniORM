@@ -1,8 +1,8 @@
-import miniORM from '../miniORM.js'
+import mySQLizer from '../mySQLizer.js'
 import assert from 'assert'
 import debug from 'debug'
 
-const testDebug = debug('miniORM:test')
+const testDebug = debug('mySQLizer:test')
 
 /**
  * Test Suite: Auto-closing Behavior
@@ -14,13 +14,13 @@ const testDebug = debug('miniORM:test')
  * 4. Query building functionality remains intact
  */
 
-console.log('🧪 miniORM Auto-closing Test Suite')
+console.log('🧪 mySQLizer Auto-closing Test Suite')
 console.log('==================================')
 
 async function testManualClosingNotAvailable() {
   console.log('\n1️⃣ Testing: Manual closing methods are NOT available')
 
-  const model = new miniORM()
+  const model = new mySQLizer()
 
   // Test that manual closing methods don't exist
   const manualMethods = [
@@ -58,7 +58,7 @@ async function testStaticMethodsNotAvailable() {
 
   for (const method of staticMethods) {
     assert.strictEqual(
-      typeof miniORM[method],
+      typeof mySQLizer[method],
       'undefined',
       `Static method ${method}() should NOT be available`,
     )
@@ -70,9 +70,9 @@ async function testStaticMethodsNotAvailable() {
 async function testConnectionPoolSharing() {
   console.log('\n3️⃣ Testing: Connection pool singleton behavior')
 
-  const model1 = new miniORM()
-  const model2 = new miniORM()
-  const model3 = new miniORM()
+  const model1 = new mySQLizer()
+  const model2 = new mySQLizer()
+  const model3 = new mySQLizer()
 
   model1.setTable('table1')
   model2.setTable('table2')
@@ -90,7 +90,7 @@ async function testConnectionPoolSharing() {
 async function testQueryBuilding() {
   console.log('\n4️⃣ Testing: Query building still works with auto-closing')
 
-  const model = new miniORM()
+  const model = new mySQLizer()
   model.setTable('users')
 
   const query1 = model.select('id', 'name').where({ active: 1 })
@@ -120,12 +120,11 @@ async function testAutoClosingConfiguration() {
   console.log('\n5️⃣ Testing: Auto-closing configuration is applied')
 
   // Test with configuration options
-  const model = new miniORM({
+  const model = new mySQLizer({
     host: 'localhost',
     user: 'test',
     password: 'test',
-    database: 'testdb',
-    connectionLimit: 5,
+    database: 'test_db',
   })
 
   model.setTable('test')
@@ -147,7 +146,7 @@ async function testProcessExitHandling() {
   const beforeExit = process.listenerCount('exit')
 
   // Create a model to trigger connection setup
-  const model = new miniORM({ database: 'test' })
+  const model = new mySQLizer({ database: 'test' })
   model.setTable('test')
 
   // Give some time for async setup
@@ -164,7 +163,7 @@ async function testProcessExitHandling() {
 async function testErrorHandling() {
   console.log('\n7️⃣ Testing: Error handling with auto-closing')
 
-  const model = new miniORM()
+  const model = new mySQLizer()
   model.setTable('users')
 
   // Test query ending with logical operator (should throw)
@@ -201,7 +200,7 @@ async function runTests() {
     console.log('✅ Error handling works as expected')
 
     console.log('\n🔧 Implementation Summary:')
-    console.log('- miniORM now enforces auto-closing only')
+    console.log('- mySQLizer now enforces auto-closing only')
     console.log('- No manual connection management required')
     console.log('- Consumers cannot opt out of auto-closing')
     console.log('- Connection pool lifecycle is fully automated')

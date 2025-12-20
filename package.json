@@ -1,6 +1,6 @@
 {
   "name": "mysqlizer",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A lightweight, fluent MySQL query builder for Node.js with automatic connection pool management and immutable builder pattern",
   "main": "mySQLizer.js",
   "scripts": {
@@ -41,6 +41,7 @@
     "db/",
     "execute/",
     "helper/",
+    "assets/",
     "README.md",
     "LICENSE"
   ],

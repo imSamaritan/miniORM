@@ -1,6 +1,6 @@
 import express from 'express'
 import dotenv from '@dotenvx/dotenvx'
-import miniORM from './miniORM.js'
+import mySQLizer from './mySQLizer.js'
 
 // Load environment variables
 dotenv.config()
@@ -8,11 +8,11 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 3000
 
-// That's it! No shutdown handling needed - miniORM handles it automatically
+// That's it! No shutdown handling needed - mySQLizer handles it automatically
 
 app.get('/', async (req, res) => {
   try {
-    const model = new miniORM()
+    const model = new mySQLizer()
     model.setTable('posts')
 
     const results = await model
@@ -28,7 +28,7 @@ app.get('/', async (req, res) => {
 
 app.get('/all-posts', async (req, res) => {
   try {
-    const model = new miniORM()
+    const model = new mySQLizer()
     model.setTable('posts')
 
     const results = await model.selectAll().done()
@@ -40,7 +40,7 @@ app.get('/all-posts', async (req, res) => {
 
 app.get('/users', async (req, res) => {
   try {
-    const model = new miniORM()
+    const model = new mySQLizer()
     model.setTable('users')
 
     const results = await model
@@ -65,5 +65,5 @@ app.listen(PORT, () => {
   console.log(
     '✨ Auto shutdown enabled - just press Ctrl+C to gracefully stop!',
   )
-  console.log('🐛 Debug: DEBUG=miniORM:* node auto-example.js')
+  console.log('🐛 Debug: DEBUG=mySQLizer:* node auto-example.js')
 })

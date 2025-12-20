@@ -25,8 +25,12 @@ app.use(express.json())
 //Get all posts
 app.get('/', async (req, res) => {
   try {
-    const results = await db.fromTable(`posts`).select(`*`).done()
+    const results = await db
+      .fromTable(`posts`)
+      .selectAll()
+      .orderBy({ post_id: 'ASC' }, `post_created_at`)
 
+    console.log(db.state)
     return res.json(results)
   } catch (error) {
     return res.status(400).json({ warning: error.message })

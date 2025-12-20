@@ -5,7 +5,7 @@ Get started with miniORM in minutes!
 ## Installation
 
 ```bash
-npm install miniorm
+npm install mysqlizer
 ```
 
 ## Basic Setup
@@ -13,10 +13,10 @@ npm install miniorm
 ### 1. Create a database connection
 
 ```javascript
-import miniORM from 'miniorm'
+import mySQLizer from 'mysqlizer'
 
 // Create a model instance with your database configuration
-const model = new miniORM({
+const model = new mySQLizer({
   host: 'localhost',
   user: 'your_username',
   password: 'your_password',
@@ -187,13 +187,13 @@ const page2 = await model
 ## Complete Example
 
 ```javascript
-import miniORM from 'miniorm'
+import mySQLizer from 'mysqlizer'
 import dotenv from 'dotenv'
 
 dotenv.config()
 
 // Initialize model
-const model = new miniORM({
+const model = new mySQLizer({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
@@ -242,10 +242,10 @@ getUserPosts(1).then(result => {
 
 ```javascript
 import express from 'express'
-import miniORM from 'miniorm'
+import mySQLizer from 'mysqlizer'
 
 const app = express()
-const model = new miniORM({
+const model = new mySQLizer({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
@@ -364,13 +364,13 @@ Enable debug mode to see SQL queries:
 
 ```bash
 # Unix/Mac
-DEBUG=miniORM:* node your-app.js
+DEBUG=mySQLizer:* node your-app.js
 
 # Windows (CMD)
-set DEBUG=miniORM:* && node your-app.js
+set DEBUG=mySQLizer:* && node your-app.js
 
 # Windows (PowerShell)
-$env:DEBUG="miniORM:*"; node your-app.js
+$env:DEBUG="mySQLizer:*"; node your-app.js
 ```
 
 ## Tips
@@ -380,7 +380,7 @@ $env:DEBUG="miniORM:*"; node your-app.js
    .where('age', '=', { value: 25, type: 'number' })
    ```
 
-2. **Chain Methods**: miniORM uses an immutable builder pattern
+2. **Chain Methods**: mySQLizer uses an immutable builder pattern
    ```javascript
    const query = model.fromTable('users')
    const withWhere = query.where('age', '>', { value: 18, type: 'number' })
@@ -396,7 +396,7 @@ $env:DEBUG="miniORM:*"; node your-app.js
 
 4. **Connection Pool**: The connection pool is managed automatically
    - No need to manually open/close connections
-   - Shared across all miniORM instances
+   - Shared across all mySQLizer instances
    - Automatically cleaned up on process exit
 
 ## Next Steps
@@ -408,8 +408,8 @@ $env:DEBUG="miniORM:*"; node your-app.js
 ## Need Help?
 
 - 📖 [Full Documentation](README.md)
-- 🐛 [Report Issues](https://github.com/yourusername/miniorm/issues)
-- 💬 [Discussions](https://github.com/yourusername/miniorm/discussions)
+- 🐛 [Report Issues](https://github.com/yourusername/mysqlizer/issues)
+- 💬 [Discussions](https://github.com/yourusername/mysqlizer/discussions)
 
 ---
 
