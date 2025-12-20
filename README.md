@@ -1,11 +1,10 @@
 <div align="center">
 
-<!-- 
-  Logo displays on GitHub using relative path.
-  For npm publishing: Replace src with absolute GitHub URL after pushing to GitHub:
-  src="https://raw.githubusercontent.com/YOUR_USERNAME/mysqlizer/main/assets/mysqlizer-logo.png"
--->
-<img src="./assets/mysqlizer-logo.png" alt="mySQLizer Logo" width="400">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yourusername/mysqlizer/main/assets/mysqlizer-logo.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/yourusername/mysqlizer/main/assets/mysqlizer-logo.png">
+  <img alt="mySQLizer Logo" src="./assets/mysqlizer-logo.png" width="400">
+</picture>
 
 # mySQLizer
 
@@ -432,6 +431,97 @@ const page3 = await db
   .select('*')
   .limit(20)
   .offset(40)
+```
+
+#### `orderBy(...columns)`
+Orders query results by one or more columns. Supports multiple syntax patterns for flexibility.
+
+**Parameters:**
+- String arguments (columns default to ASC order)
+- Object arguments with `{column: 'ASC'|'DESC'}` format
+- Mix of both styles in a single call
+
+**Syntax Patterns:**
+
+```javascript
+// Pattern 1: Single column, ascending (default)
+const users = await db
+  .fromTable('users')
+  .selectAll()
+  .orderBy('name')
+// SQL: ORDER BY name ASC
+
+// Pattern 2: Single column with explicit direction
+const users = await db
+  .fromTable('users')
+  .selectAll()
+  .orderBy({ created_at: 'DESC' })
+// SQL: ORDER BY created_at DESC
+
+// Pattern 3: Multiple columns as strings (all ASC)
+const users = await db
+  .fromTable('users')
+  .selectAll()
+  .orderBy('last_name', 'first_name')
+// SQL: ORDER BY last_name ASC, first_name ASC
+
+// Pattern 4: Multiple columns in one object
+const users = await db
+  .fromTable('users')
+  .selectAll()
+  .orderBy({ last_name: 'ASC', first_name: 'ASC' })
+// SQL: ORDER BY last_name ASC, first_name ASC
+
+// Pattern 5: Mixed - object and string
+const posts = await db
+  .fromTable('posts')
+  .selectAll()
+  .orderBy({ featured: 'DESC' }, 'created_at')
+// SQL: ORDER BY featured DESC, created_at ASC
+
+// Pattern 6: Complex multi-column sorting
+const products = await db
+  .fromTable('products')
+  .selectAll()
+  .where('active', '=', true)
+  .orderBy({ category: 'ASC', price: 'DESC' }, 'name')
+  .limit(50)
+// SQL: ORDER BY category ASC, price DESC, name ASC
+
+// Pattern 7: Combining with pagination
+const reports = await db
+  .fromTable('reports')
+  .select('id', 'title', 'created_at', 'priority')
+  .where('status', '=', 'published')
+  .orderBy({ priority: 'DESC', created_at: 'DESC' })
+  .limit(10)
+  .offset(0)
+```
+
+**Important Notes:**
+- Direction values: `'ASC'` or `'DESC'` (case-insensitive)
+- String arguments without direction default to ASC
+- Multiple arguments are combined in the ORDER BY clause
+- Can chain with WHERE, LIMIT, OFFSET, and other clauses
+- ⚠️ Multiple `orderBy()` calls will override previous ones (not append)
+
+**Common Use Cases:**
+
+```javascript
+// Blog posts - newest first
+.orderBy({ created_at: 'DESC' })
+
+// User listing - alphabetical
+.orderBy('last_name', 'first_name')
+
+// Products - by category then price
+.orderBy({ category: 'ASC', price: 'DESC' })
+
+// Leaderboard - highest score first
+.orderBy({ score: 'DESC', level: 'DESC' })
+
+// Priority tasks - urgent first, then by deadline
+.orderBy({ priority: 'DESC', deadline: 'ASC' })
 ```
 
 ---
@@ -1148,6 +1238,7 @@ db.fromTable('users').select('*').in(['admin'])
 | `orGroup()` | Logical | OR (grouped) | |
 | `limit()` | Pagination | LIMIT results | |
 | `offset()` | Pagination | OFFSET results | |
+| `orderBy()` | Pagination | ORDER BY columns | |
 | `state` | Property | Query state | |
 | `table` | Property | Table name | |
 | `operatorSignal` | Property | Operator flag | |
