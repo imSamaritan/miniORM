@@ -1,10 +1,11 @@
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yourusername/mysqlizer/main/assets/mysqlizer-logo.png">
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/yourusername/mysqlizer/main/assets/mysqlizer-logo.png">
-  <img alt="mySQLizer Logo" src="./assets/mysqlizer-logo.png" width="400">
-</picture>
+<!-- 
+  Logo displays on GitHub using relative path.
+  For npm publishing: Replace src with absolute GitHub URL after pushing to GitHub:
+  src="https://raw.githubusercontent.com/YOUR_USERNAME/mysqlizer/main/assets/mysqlizer-logo.png"
+-->
+<img src="./assets/mysqlizer-logo.png" alt="mySQLizer Logo" width="400">
 
 # mySQLizer
 
