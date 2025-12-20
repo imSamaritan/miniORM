@@ -1,13 +1,13 @@
-import miniORM from './miniORM.js'
+import mySQLizer from './mySQLizer.js'
 import debug from 'debug'
 
 const exampleDebug = debug('examples:simple')
 
-console.log('miniORM Simple Usage Examples')
+console.log('mySQLizer Simple Usage Examples')
 console.log('============================\n')
 
 // Create model instance
-const model = new miniORM()
+const model = new mySQLizer()
 model.setTable('users')
 
 // Example 1: Basic SELECT
@@ -266,7 +266,7 @@ async function example8_QueryStateInspection() {
 
 // Run all examples
 async function runAllExamples() {
-  console.log('🚀 Starting miniORM Simple Examples\n')
+  console.log('🚀 Starting mySQLizer Simple Examples\n')
 
   await example1_BasicSelect()
   await example2_WhereConditions()
@@ -279,7 +279,7 @@ async function runAllExamples() {
 
   console.log('✅ All examples completed!')
   console.log('\n💡 To see debug output, run:')
-  console.log('   DEBUG=examples:*,miniORM:* node simple-examples.js')
+  console.log('   DEBUG=examples:*,mySQLizer:* node simple-examples.js')
   console.log(
     '\n🔌 Connection pool will close automatically when process exits',
   )

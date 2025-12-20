@@ -361,7 +361,36 @@ class Builder {
 
     return this[_clone](state)
   }
+  /**
+   * @returns {this}
+   */
+  orderBy(...sort) {
+    const { query, values } = this.state
+    const orderByState = []
 
+    for (const sortElement of sort) {
+
+      if (typeof sortElement === 'string') {
+        orderByState.push(`${sortElement} ASC`)
+      }
+
+      if (typeof sortElement === 'object' && sortElement instanceof Object) {
+        const columns = Object.keys(sortElement)
+
+        for (const column of columns) {
+          const direction = sortElement[column]
+          orderByState.push(`${column} ${direction.toUpperCase()}`)
+        }
+      }
+      
+    }
+
+    const state = {
+      query: [...query, 'ORDER BY', orderByState.join(', ')],
+      values: [...values],
+    }
+    return this[_clone](state)
+  }
   /**
   @param {string} column
   @param {string} operator

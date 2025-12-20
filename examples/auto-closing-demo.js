@@ -1,10 +1,10 @@
-import miniORM from '../miniORM.js'
+import mySQLizer from '../mySQLizer.js'
 import debug from 'debug'
 
 /**
  * Auto-closing Demo with Interactive Ctrl+C Test
  *
- * This example demonstrates how miniORM automatically handles
+ * This example demonstrates how mySQLizer automatically handles
  * connection pool lifecycle without requiring manual cleanup.
  *
  * Features:
@@ -13,16 +13,16 @@ import debug from 'debug'
  * - Real-time demonstration of auto-closing in action
  */
 
-console.log('🚀 miniORM Auto-closing Demo')
+console.log('🚀 mySQLizer Auto-closing Demo')
 console.log('============================')
 console.log('')
 
 // Show what methods are NOT available (by design)
 console.log('🚫 Methods that do NOT exist (by design):')
-console.log('- miniORM.closePool()')
-console.log('- miniORM.prototype.close()')
-console.log('- miniORM.prototype.disconnect()')
-console.log('- miniORM.prototype.end()')
+console.log('- mySQLizer.closePool()')
+console.log('- mySQLizer.prototype.close()')
+console.log('- mySQLizer.prototype.disconnect()')
+console.log('- mySQLizer.prototype.end()')
 console.log('')
 
 console.log('✅ What IS available (auto-closing only):')
@@ -34,22 +34,22 @@ console.log('')
 
 console.log('🔍 DEBUG INSTRUCTIONS:')
 console.log('To see detailed cleanup messages, run with:')
-console.log('  DEBUG=miniORM:* node examples/auto-closing-demo.js')
+console.log('  DEBUG=mySQLizer:* node examples/auto-closing-demo.js')
 console.log('')
 
 // Enable debug output for this demo
-process.env.DEBUG = 'miniORM:*'
+process.env.DEBUG = 'mySQLizer:*'
 
 async function runDemo() {
   try {
     // Create multiple instances to demonstrate shared pool
     console.log(
-      '✅ Creating 3 miniORM instances (all share the same connection pool)',
+      '✅ Creating 3 mySQLizer instances (all share the same connection pool)',
     )
 
-    const postsModel = new miniORM()
-    const usersModel = new miniORM()
-    const categoriesModel = new miniORM()
+    const postsModel = new mySQLizer()
+    const usersModel = new mySQLizer()
+    const categoriesModel = new mySQLizer()
 
     postsModel.setTable('posts')
     usersModel.setTable('users')
@@ -108,7 +108,7 @@ function startInteractiveTest() {
   console.log('')
 
   // Show active connection pool status
-  const testModel = new miniORM()
+  const testModel = new mySQLizer()
   testModel.setTable('test_table')
 
   const testQuery = testModel.select('id', 'name').where({ active: 1 })
